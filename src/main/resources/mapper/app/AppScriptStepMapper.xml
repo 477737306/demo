@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cmit.testing.dao.app.AppScriptStepMapper" >
+  <resultMap id="BaseResultMap" type="com.cmit.testing.entity.app.AppScriptStep" >
+    <id column="script_step_id" property="scriptStepId" jdbcType="INTEGER" />
+    <result column="script_file_id" property="scriptFileId" jdbcType="INTEGER" />
+    <result column="script_id" property="scriptId" jdbcType="INTEGER" />
+    <result column="step_no" property="stepNo" jdbcType="VARCHAR" />
+    <result column="step_desc" property="stepDesc" jdbcType="VARCHAR" />
+    <result column="step_code" property="stepCode" jdbcType="VARCHAR" />
+    <result column="action_type" property="actionType" jdbcType="VARCHAR" />
+    <result column="input_value" property="inputValue" jdbcType="VARCHAR" />
+    <result column="xpath" property="xpath" jdbcType="VARCHAR" />
+    <result column="coordinate" property="coordinate" jdbcType="VARCHAR" />
+    <result column="action_text" property="actionText" jdbcType="VARCHAR" />
+    <result column="pic_name" property="picName" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="create_person" property="createPerson" jdbcType="INTEGER" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="update_person" property="updatePerson" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    script_step_id, script_file_id, script_id, step_no, step_desc, step_code, action_type,input_value, xpath,
+    coordinate, action_text, pic_name, create_time, create_person, update_time, update_person
+  </sql>
+
+  <select id="selectByAppStep" resultMap="BaseResultMap" parameterType="com.cmit.testing.entity.app.AppScriptStep">
+    SELECT <include refid="Base_Column_List"/>
+    FROM app_script_step
+    <where>
+      <if test="scriptStepId != null">
+        AND script_step_id = #{scriptStepId, jdbcType=INTEGER}
+      </if>
+      <if test="scriptFileId != null">
+        AND script_file_id = #{scriptFileId, jdbcType=INTEGER}
+      </if>
+      <if test="scriptId != null">
+        AND script_id = #{scriptId, jdbcType=INTEGER}
+      </if>
+      <if test="stepNo != null">
+        AND step_no = #{stepNo, jdbcType=VARCHAR}
+      </if>
+      <if test="actionType != null">
+        AND action_type = #{actionType, jdbcType=VARCHAR}
+      </if>
+    </where>
+  </select>
+
+  <!--获取短信内容校验的关键字-->
+  <select id="getSmsVerifyByMap" resultMap="BaseResultMap" parameterType="map">
+    SELECT <include refid="Base_Column_List"/>
+    FROM app_script_step
+    <where>
+      <if test="scriptStepId != null">
+        AND script_step_id = #{scriptStepId, jdbcType=INTEGER}
+      </if>
+      <if test="scriptFileId != null">
+        AND script_file_id = #{scriptFileId, jdbcType=INTEGER}
+      </if>
+      <if test="scriptId != null">
+        AND script_id = #{scriptId, jdbcType=INTEGER}
+      </if>
+      <if test="appCaseId != null">
+        AND script_id = ( SELECT script_id FROM app_case WHERE case_id = #{appCaseId, jdbcType=INTEGER})
+      </if>
+      <if test="actionType != null">
+        AND action_type = #{actionType, jdbcType=VARCHAR}
+      </if>
+    </where>
+    LIMIT 1
+  </select>
+
+  <delete id="deleteByScriptIds" parameterType="java.lang.Integer" >
+    delete from app_script_step
+    where script_id IN
+    <foreach item="id" collection="ids" open="(" close=")" separator=",">
+      #{id,jdbcType=INTEGER}
+    </foreach>
+  </delete>
+
+  <delete id="deleteByIds" parameterType="java.lang.Integer" >
+    delete from app_script_step
+    where script_step_id IN
+    <foreach item="id" collection="ids" open="(" close=")" separator=",">
+      #{id,jdbcType=INTEGER}
+    </foreach>
+  </delete>
+
+  <delete id="deleteByScriptFileId" parameterType="java.lang.Integer">
+    DELETE FROM app_script_step
+    WHERE script_file_id IN
+    <foreach item="id" collection="scriptFileIds" open="(" close=")" separator=",">
+      #{id, jdbcType=INTEGER}
+    </foreach>
+  </delete>
+
+  <delete id="deleteByScriptId" parameterType="java.lang.Integer">
+    DELETE FROM app_script_step
+    WHERE script_id = #{scriptId, jdbcType=INTEGER}
+  </delete>
+
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select
+    <include refid="Base_Column_List" />
+    from app_script_step
+    where script_step_id = #{scriptStepId,jdbcType=INTEGER}
+  </select>
+  <select id="selectByscriptId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select
+    <include refid="Base_Column_List" />
+    from app_script_step
+    where script_id = #{scriptId,jdbcType=INTEGER}
+  </select>
+
+  <select id="getStepByScriptFileId" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    SELECT <include refid="Base_Column_List" />
+    FROM app_script_step
+    WHERE script_file_id = #{scriptFileId,jdbcType=INTEGER}
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from app_script_step
+    where script_step_id = #{scriptStepId,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByscriptId" parameterType="java.lang.Integer" >
+    delete from app_script_step
+    where script_id = #{scriptId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.cmit.testing.entity.app.AppScriptStep" useGeneratedKeys="true" keyProperty="scriptStepId">
+    insert into app_script_step (script_step_id, script_file_id, script_id,
+      step_no, step_desc, step_code, action_type, input_value,
+      `xpath`, coordinate, action_text,
+      pic_name, create_time, create_person, 
+      update_time, update_person)
+    values (#{scriptStepId,jdbcType=INTEGER}, #{scriptFileId,jdbcType=INTEGER}, #{scriptId,jdbcType=INTEGER}, 
+      #{stepNo,jdbcType=VARCHAR},#{stepDesc,jdbcType=VARCHAR}, #{stepCode,jdbcType=VARCHAR}, #{actionType,jdbcType=VARCHAR},  #{inputValue,jdbcType=VARCHAR},
+      #{xpath,jdbcType=VARCHAR}, #{coordinate,jdbcType=VARCHAR}, #{actionText,jdbcType=VARCHAR}, 
+      #{picName,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, #{createPerson,jdbcType=INTEGER}, 
+      #{updateTime,jdbcType=TIMESTAMP}, #{updatePerson,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" parameterType="com.cmit.testing.entity.app.AppScriptStep" >
+    insert into app_script_step
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="scriptStepId != null" >
+        script_step_id,
+      </if>
+      <if test="scriptFileId != null" >
+        script_file_id,
+      </if>
+      <if test="scriptId != null" >
+        script_id,
+      </if>
+      <if test="stepNo != null" >
+        step_no,
+      </if>
+      <if test="stepDesc != null" >
+        step_desc,
+      </if>
+      <if test="stepCode != null" >
+        step_code,
+      </if>
+      <if test="actionType != null" >
+        action_type,
+      </if>
+      <if test="inputValue != null" >
+        input_value,
+      </if>
+      <if test="xpath != null" >
+        xpath,
+      </if>
+      <if test="coordinate != null" >
+        coordinate,
+      </if>
+      <if test="actionText != null" >
+        action_text,
+      </if>
+      <if test="picName != null" >
+        pic_name,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="createPerson != null" >
+        create_person,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="updatePerson != null" >
+        update_person,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="scriptStepId != null" >
+        #{scriptStepId,jdbcType=INTEGER},
+      </if>
+      <if test="scriptFileId != null" >
+        #{scriptFileId,jdbcType=INTEGER},
+      </if>
+      <if test="scriptId != null" >
+        #{scriptId,jdbcType=INTEGER},
+      </if>
+      <if test="stepNo != null" >
+        #{stepNo,jdbcType=VARCHAR},
+      </if>
+      <if test="stepDesc != null" >
+        #{stepDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="stepCode != null" >
+        #{stepCode,jdbcType=VARCHAR},
+      </if>
+      <if test="actionType != null" >
+        #{actionType,jdbcType=VARCHAR},
+      </if>
+      <if test="inputValue != null" >
+        #{inputValue,jdbcType=VARCHAR},
+      </if>
+      <if test="xpath != null" >
+        #{xpath,jdbcType=VARCHAR},
+      </if>
+      <if test="coordinate != null" >
+        #{coordinate,jdbcType=VARCHAR},
+      </if>
+      <if test="actionText != null" >
+        #{actionText,jdbcType=VARCHAR},
+      </if>
+      <if test="picName != null" >
+        #{picName,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createPerson != null" >
+        #{createPerson,jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updatePerson != null" >
+        #{updatePerson,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.cmit.testing.entity.app.AppScriptStep" >
+    update app_script_step
+    <set >
+      <if test="scriptFileId != null" >
+        script_file_id = #{scriptFileId,jdbcType=INTEGER},
+      </if>
+      <if test="scriptId != null" >
+        script_id = #{scriptId,jdbcType=INTEGER},
+      </if>
+      <if test="stepNo != null" >
+        step_no = #{stepNo,jdbcType=VARCHAR},
+      </if>
+      <if test="stepDesc != null" >
+        step_desc = #{stepDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="stepCode != null" >
+        step_code = #{stepCode,jdbcType=VARCHAR},
+      </if>
+      <if test="actionType != null" >
+        action_type = #{actionType,jdbcType=VARCHAR},
+      </if>
+      <if test="inputValue != null" >
+        input_value = #{inputValue,jdbcType=VARCHAR},
+      </if>
+      <if test="xpath != null" >
+        xpath = #{xpath,jdbcType=VARCHAR},
+      </if>
+      <if test="coordinate != null" >
+        coordinate = #{coordinate,jdbcType=VARCHAR},
+      </if>
+      <if test="actionText != null" >
+        action_text = #{actionText,jdbcType=VARCHAR},
+      </if>
+      <if test="picName != null" >
+        pic_name = #{picName,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createPerson != null" >
+        create_person = #{createPerson,jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updatePerson != null" >
+        update_person = #{updatePerson,jdbcType=INTEGER},
+      </if>
+    </set>
+    where script_step_id = #{scriptStepId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.cmit.testing.entity.app.AppScriptStep" >
+    update app_script_step
+    set script_file_id = #{scriptFileId,jdbcType=INTEGER},
+      script_id = #{scriptId,jdbcType=INTEGER},
+      step_no = #{stepNo,jdbcType=VARCHAR},
+      step_desc = #{stepDesc,jdbcType=VARCHAR},
+      step_code = #{stepCode,jdbcType=VARCHAR},
+      action_type = #{actionType,jdbcType=VARCHAR},
+      input_value = #{inputValue,jdbcType=VARCHAR},
+      xpath = #{xpath,jdbcType=VARCHAR},
+      coordinate = #{coordinate,jdbcType=VARCHAR},
+      action_text = #{actionText,jdbcType=VARCHAR},
+      pic_name = #{picName,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      create_person = #{createPerson,jdbcType=INTEGER},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      update_person = #{updatePerson,jdbcType=INTEGER}
+    where script_step_id = #{scriptStepId,jdbcType=INTEGER}
+  </update>
+
+
+    <select id="listByScriptIds" resultMap="BaseResultMap" parameterType="int">
+        select
+        <include refid="Base_Column_List" />
+        from app_script_step
+        where script_id IN
+        <foreach item="item" collection="list" open="(" close=")" separator=",">
+            #{item,jdbcType=INTEGER}
+        </foreach>
+    </select>
+  <select id="listStepByScriptId" resultMap="BaseResultMap" parameterType="int">
+    select
+    <include refid="Base_Column_List" />
+    from app_script_step
+    where script_id =#{scriptId}
+  </select>
+</mapper>

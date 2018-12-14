@@ -1,0 +1,1258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cmit.testing.dao.app.AppCaseMapper">
+  <resultMap id="BaseResultMap" type="com.cmit.testing.entity.app.AppCase">
+    <id column="case_id" jdbcType="INTEGER" property="caseId" />
+    <result column="case_num" jdbcType="VARCHAR" property="caseNum" />
+    <result column="case_name" jdbcType="VARCHAR" property="caseName" />
+    <result column="business_name" jdbcType="VARCHAR" property="businessName" />
+    <result column="case_desc" jdbcType="VARCHAR" property="caseDesc" />
+    <result column="business_id" jdbcType="INTEGER" property="businessId" />
+    <result column="script_id" jdbcType="INTEGER" property="scriptId" />
+    <result column="follow_id" jdbcType="VARCHAR" property="followId" />
+    <result column="retry_count" jdbcType="INTEGER" property="retryCount" />
+    <result column="real_execute_num" jdbcType="INTEGER" property="realExecuteNum" />
+    <result column="zip_md5_code" jdbcType="VARCHAR" property="zipMd5Code" />
+    <result column="task_zip_path" jdbcType="VARCHAR" property="taskZipPath" />
+    <result column="is_finish" jdbcType="INTEGER" property="isFinish" />
+    <result column="is_record" jdbcType="INTEGER" property="isRecord" />
+    <result column="execute_type" jdbcType="INTEGER" property="executeType" />
+    <result column="cron_time" jdbcType="VARCHAR" property="cronTime" />
+    <result column="execute_time" jdbcType="TIMESTAMP" property="executeTime" />
+    <result column="is_merge" jdbcType="INTEGER" property="isMerge" />
+    <result column="execute_count" jdbcType="INTEGER" property="executeCount" />
+    <result column="result_file_path" jdbcType="VARCHAR" property="resultFilePath" />
+    <result column="order_code" jdbcType="INTEGER" property="orderCode" />
+    <result column="success_count" jdbcType="INTEGER" property="successCount" />
+    <result column="failure_count" jdbcType="INTEGER" property="failureCount" />
+    <result column="success_rate" jdbcType="VARCHAR" property="successRate" />
+    <result column="old_case_id" jdbcType="INTEGER" property="oldCaseId" />
+    <result column="survey_task_id" jdbcType="INTEGER" property="surveyTaskId" />
+    <result column="sys_task_id" jdbcType="INTEGER" property="sysTaskId" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="create_person" jdbcType="INTEGER" property="createPerson" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="update_person" jdbcType="INTEGER" property="updatePerson" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    case_id, case_num, case_name, case_desc, business_id, script_id,follow_id, retry_count, real_execute_num, zip_md5_code, task_zip_path, is_finish,
+    is_record, execute_type,cron_time, execute_time,is_merge, execute_count, result_file_path, order_code, success_count,
+    failure_count, success_rate, old_case_id, sys_task_id,survey_task_id,
+ create_time, create_person, update_time, update_person
+  </sql>
+
+  <sql id="Business_Name">
+    b.name AS business_name
+  </sql>
+  
+  <!--根据CaseIds获取用例相关的信息-->
+  <select id="getAppCaseMapByCaseIds" resultType="java.util.Map" parameterType="java.lang.Integer">
+    select
+      case_id as 'caseId',
+      "app" as 'type',
+      follow_id as 'followIds'
+    from app_case where old_case_id = 0 and case_id in
+    <foreach collection="caseIdList" item="caseId" separator="," open="(" close=")">
+      #{caseId, jdbcType=INTEGER}
+    </foreach>
+    
+  </select>
+
+  <!--获取最新批次用例的轮次信息  executeCount会一直叠加-->
+  <select id="getMaxExecuteCount" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    select MAX( execute_count ) from app_case where old_case_id = #{caseId, jdbcType=INTEGER}
+  </select>
+
+  <!--获取最新的批次号  BatchNumber-->
+  <select id="getMaxBatchNumber" resultType="java.util.Map">
+    SELECT
+        MAX( execute_num ) AS maxNum
+    FROM
+        app_case_device AS cd
+    WHERE
+        param_type = 1 AND cd.case_id IN (
+          SELECT case_id FROM app_case WHERE old_case_id = #{caseId}
+        )
+        GROUP BY province
+        HAVING province = #{province}
+  </select>
+
+  <!--根据条件获取单独执行的副本的caseId-->
+  <select id="getNewCaseIdByOldCaseId" resultType="java.lang.Integer">
+      SELECT
+	      case_id
+      FROM
+          app_case AS c
+      WHERE
+          old_case_id = #{oldCaseId, jdbcType=INTEGER}
+          AND execute_count = #{executeCount, jdbcType=INTEGER}
+  </select>
+  <select id="getMaxNewCaseIdByOldCaseId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    SELECT
+      case_id
+    FROM
+      app_case AS c
+    WHERE
+      old_case_id = #{oldCaseId, jdbcType=INTEGER}
+      AND execute_count = (
+        SELECT MAX( execute_count ) FROM app_case
+        WHERE old_case_id = #{oldCaseId, jdbcType=INTEGER} AND sys_task_id IS NULL AND survey_task_id IS NULL
+      )
+  </select>
+
+  <!--根据CaseId查询关联脚本的对应的应用ID-->
+  <select id="getAppIdByCaseId" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+    SELECT f.app_id
+	FROM
+	  app_case AS c LEFT JOIN app_script_file AS f ON f.script_id = c.script_id
+	WHERE case_id = #{caseId, jdbcType=INTEGER}
+  </select>
+
+  <select id="selectByAppCase" parameterType="com.cmit.testing.entity.app.AppCase" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from app_case
+    <where>
+      <if test="caseId != null">
+        AND case_id = #{caseId,jdbcType=INTEGER}
+      </if>
+      <if test="followId != null">
+        AND follow_id = #{followId, jdbcType=VARCHAR}
+      </if>
+      <if test="caseName != null">
+        AND case_name LIKE CONCAT('%', #{caseName,jdbcType=VARCHAR}, '%')
+      </if>
+      <if test="businessId != null">
+        AND business_id = #{businessId,jdbcType=INTEGER}
+      </if>
+      <if test="isFinish != null">
+        AND is_finish = #{isFinish,jdbcType=INTEGER}
+      </if>
+      <if test="oldCaseId != null">
+        and old_case_id = #{oldCaseId, jdbcType=INTEGER}
+      </if>
+      <if test="executeCount != null">
+        and execute_count = #{executeCount, jdbcType=INTEGER}
+      </if>
+      <if test="sysTaskId != null">
+        AND sys_task_id = #{sysTaskId,jdbcType=INTEGER}
+      </if>
+      <if test="surveyTaskId != null and surveyTaskId != ''">
+        AND survey_task_id = #{surveyTaskId,jdbcType=INTEGER}
+      </if>
+    </where>
+  </select>
+
+  <!--众测任务ID和CaseID获取众测任务关联的用例-->
+  <select id="getAppCaseBySurveyTaskIdAndCaseId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from app_case
+    where old_case_id = #{caseId,jdbcType=INTEGER} and survey_task_id = #{surveyTaskId,jdbcType=INTEGER}
+  </select>
+
+  <!--批量任务ID和caseId 获取批量执行任务关联的用例-->
+  <select id="getAppCaseTaskIdAndCaseId" resultMap="BaseResultMap">
+    SELECT
+        <include refid="Base_Column_List" />
+    FROM
+        app_case
+    WHERE
+        old_case_id = #{caseId,jdbcType=INTEGER}
+        AND sys_task_id = #{sysTaskId,jdbcType=INTEGER}
+    ORDER BY execute_count DESC
+  </select>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from app_case
+    where case_id = #{id,jdbcType=INTEGER}
+  </select>
+
+  <!--统计业务下用例的成功数与失败数-->
+  <select id="appCaseCountNumber" parameterType="java.lang.Integer" resultType="java.util.Map">
+    SELECT
+      count( IF ( success_rate = 1, TRUE, NULL ) ) AS successNum,
+      count( IF ( success_rate != 1, TRUE, NULL ) ) AS failureNum
+    FROM app_case
+    WHERE old_case_id = 0 AND is_finish =0 AND business_id = #{businessId}
+  </select>
+
+  <!--校验项目下用例编号的重复性问题-->
+  <select id="checkCaseNumUnique" resultType="java.lang.Integer">
+    SELECT
+	    c.case_id
+    FROM
+        app_case as c
+        LEFT JOIN business as b on b.id = c.business_id
+    WHERE
+        c.old_case_id = 0
+        AND b.project_id = #{projectId, jdbcType=INTEGER}
+        AND c.case_num	= #{caseNum, jdbcType=VARCHAR}
+        <if test="caseId != null">
+          AND c.case_id != #{caseId, jdbcType=INTEGER}
+        </if>
+  </select>
+
+  <!--业务下用例分页统计-->
+  <select id="findByPage" resultType="com.cmit.testing.entity.vo.PbtVO">
+    SELECT
+    c.case_id,
+    c.case_name as name,
+    c.success_count AS successNum,
+    c.failure_count AS failureNum,
+    c.success_rate AS successRate,
+    c.update_time AS updateTime,
+    c.order_code AS CODE,
+    "appCase" AS tableFlag,
+    c.is_finish AS isFinish,
+    b.id AS menuId
+    FROM
+    app_case AS c
+    LEFT JOIN sys_permission b ON a.id = b.data_id
+    WHERE
+    b.type = "appCase"
+    AND business_id = #{businessId,jdbcType=INTEGER}
+    AND old_case_id = 0
+    <if test="name != null and name != ''">
+      AND c.case_name LIKE CONCAT('%', #{name}, '%')
+    </if>
+    ORDER BY c.order_code
+  </select>
+
+  <!--获取满足条件的定时调度用例-->
+  <select id="listAllTimingCase" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/>
+    FROM app_case
+    WHERE
+      execute_type = 1
+      AND is_finish = 2
+      AND now() >= execute_time
+  </select>
+  <select id="getListByAppCase" parameterType="com.cmit.testing.entity.TestCase" resultType="com.cmit.testing.entity.TestCase">
+      SELECT
+        a.case_id as id,
+        a.case_num as serialNumber,
+        a.case_name as name,
+        a.case_desc,
+        a.business_id,
+        a.script_id,
+        a.retry_count,
+        a.zip_md5_code,
+        a.task_zip_path,
+        a.follow_id,
+        a.is_finish,
+        a.is_record,
+        a.execute_type,
+        a.execute_time,
+        a.execute_count,
+        a.result_file_path,
+        a.order_code,
+        a.success_count,
+        a.failure_count,
+        a.success_rate,
+        a.sys_task_id,
+        a.create_time,
+        a.create_person,
+        a.update_time,
+        a.update_person,
+        b.name As businessName,
+        "app" AS type
+        from app_case a
+        JOIN business b  ON a.business_id= b.id
+      where       1=1
+      <if test="serialNumber != null and  serialNumber != ''">
+        and a.case_num = #{serialNumber,jdbcType=VARCHAR}
+      </if>
+      <if test="name != null  and  name != ''">
+        and a.case_name LIKE CONCAT('%', #{name}, '%')
+      </if>
+      <if test="businessId != null">
+        and  a.business_id = #{businessId,jdbcType=INTEGER}
+      </if>
+      <if test="scriptId != null">
+        and a.script_id = #{scriptId,jdbcType=INTEGER}
+      </if>
+      <if test="retry != null">
+        and a.retry = #{retry,jdbcType=INTEGER}
+      </if>
+      <if test="isMerge != null">
+        and a.is_merge = #{isMerge,jdbcType=INTEGER}
+      </if>
+      <if test="excuteNum != null">
+        and a.excute_num = #{excuteNum,jdbcType=INTEGER}
+      </if>
+      <if test="mergeNum != null">
+        and a.is_merge = #{mergeNum,jdbcType=INTEGER}
+      </if>
+      <if test="followId != null">
+        and a.follow_id = #{followId,jdbcType=VARCHAR}
+      </if>
+      <if test="isFinish != null">
+        and  a.is_finish = #{isFinish,jdbcType=INTEGER}
+      </if>
+      <if test="oldTestcaseId != null">
+        and a.old_case_id = #{oldTestcaseId}
+      </if>
+      <if test="unequalFinshs!=null and unequalFinshs.size >0">
+        AND a.is_finish NOT IN
+        <foreach close=")" collection="unequalFinshs" item="unequalFinsh" open="(" separator=",">
+          #{unequalFinsh,jdbcType=INTEGER}
+        </foreach>
+      </if>
+
+  </select>
+
+  <!--根据被依赖用例的ID查询所有依赖用例集合-->
+  <select id="getIdsByFollowIds" resultType="java.lang.Integer" parameterType="java.util.List">
+    SELECT case_id
+    FROM (
+      SELECT case_id, substring_index( REPLACE ( follow_id, '{"app":[', '' ), '],"web":', 1 ) follow_id FROM app_case WHERE old_case_id = 0
+      ) AS a
+    WHERE
+      <choose>
+          <when test="followIdList != null and followIdList.size > 0">
+              <foreach collection="followIdList" item="followId" open="(" close=")" separator="OR">
+                  follow_id LIKE concat('%',#{followId, jdbcType=VARCHAR}, '%')
+              </foreach>
+          </when>
+          <otherwise>
+              1<![CDATA[ != ]]>1
+          </otherwise>
+      </choose>
+  </select>
+
+  <!--根据用例ID查询所有用例-->
+  <select id="getCaseListByIds" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/>
+    FROM app_case
+    WHERE
+      case_id IN
+      <foreach collection="caseIdList" item="caseId" open="(" close=")" separator=",">
+        #{caseId, jdbcType=INTEGER}
+      </foreach>
+  </select>
+
+  <!--根据原用例ID查询所有众测任务或批量任务关联的用例-->
+  <select id="getCaseByOldCaseIds" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    SELECT <include refid="Base_Column_List"/>
+    FROM app_case
+    WHERE
+        old_case_id IN
+        <foreach collection="oldCaseIdList" item="oldCaseId" open="(" close=")" separator=",">
+          #{oldCaseId, jdbcType=INTEGER}
+        </foreach>
+        <if test="hasTaskId != null and hasTaskId != ''">
+          AND (sys_task_id IS NOT NULL OR survey_task_id IS NOT NULL)
+        </if>
+  </select>
+
+  <!--根据原用例ID查询所有副本用例-->
+  <select id="getIdsByOldCaseIds" resultType="java.lang.Integer" parameterType="java.lang.Integer">
+    SELECT case_id
+    FROM app_case
+    WHERE
+      old_case_id IN
+      <foreach collection="oldCaseIdList" item="oldCaseId" open="(" close=")" separator=",">
+        #{oldCaseId, jdbcType=INTEGER}
+      </foreach>
+  </select>
+
+
+  <select id="getAllByAppCase" resultMap="BaseResultMap" parameterType="com.cmit.testing.entity.app.AppCase">
+    SELECT <include refid="Base_Column_List"/>
+    FROM app_case
+    <where>
+      <if test="businessId != null">
+        AND business_id = #{businessId, jdbcType=INTEGER}
+      </if>
+      <if test="oldCaseId != null">
+        AND old_case_id = #{oldCaseId, jdbcType=INTEGER}
+      </if>
+      <if test="scriptId != null">
+        AND script_id = #{scriptId, jdbcType=INTEGER}
+      </if>
+      <if test="sysTaskId != null">
+        AND sys_task_id = #{sysTaskId, jdbcType=INTEGER}
+      </if>
+      <if test="followId != null">
+        AND follow_id = #{followId, jdbcType=INTEGER}
+      </if>
+    </where>
+  </select>
+
+  <!-- 获取所有母本用例的信息 -->
+  <select id="getList" resultMap="BaseResultMap" parameterType="com.cmit.testing.entity.app.AppCase">
+    SELECT
+      c.*, <include refid="Business_Name"/>
+    FROM
+      app_case AS c
+      LEFT JOIN business AS b ON c.business_id = b.id
+    WHERE
+      c.old_case_id=0
+      <if test="caseId != null and caseId != ''">
+        AND case_id = #{caseId, jdbcType=INTEGER}
+      </if>
+      <if test="caseNum != null and caseNum != ''">
+        AND case_num = #{caseNum, jdbcType=INTEGER}
+      </if>
+      <if test="caseName != null and caseName != ''">
+        AND case_name = #{caseName, jdbcType=INTEGER}
+      </if>
+      <if test="businessId != null and businessId != ''">
+        AND business_id = #{businessId, jdbcType=INTEGER}
+      </if>
+      <if test="scriptId != null and scriptId != ''">
+        AND script_id = #{scriptId, jdbcType=INTEGER}
+      </if>
+  </select>
+
+  <select id="getAppCaseById" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    SELECT <include refid="Base_Column_List"/>
+    FROM app_case AS ac
+    WHERE ac.case_id = #{caseId, jdbcType=INTEGER}
+  </select>
+    <select id="getAppCaseByoldId" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+        SELECT *
+        FROM app_case left JOIN app_case_device ON app_case.case_id=app_case_device.case_id
+        WHERE app_case.old_case_id =#{caseId}
+        order by app_case_device.execute_num desc LIMIT 1
+    </select>
+
+  <select id="getParentCaseByCaseId" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    SELECT <include refid="Base_Column_List"/>
+    FROM app_case
+    WHERE case_id = #{caseId, jdbcType=INTEGER} AND old_case_id = 0
+  </select>
+
+  <insert id="insertSelective" parameterType="com.cmit.testing.entity.app.AppCase" useGeneratedKeys="true" keyProperty="caseId">
+    insert into app_case
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="caseId != null">
+        case_id,
+      </if>
+      <if test="caseNum != null and caseNum != ''">
+        case_num,
+      </if>
+      <if test="caseName != null and caseName != ''">
+        case_name,
+      </if>
+      <if test="caseDesc != null and caseDesc != ''">
+        case_desc,
+      </if>
+      <if test="businessId != null">
+        business_id,
+      </if>
+      <if test="scriptId != null">
+        script_id,
+      </if>
+      <if test="followId != null">
+        follow_id,
+      </if>
+      <if test="retryCount != null">
+        retry_count,
+      </if>
+      <if test="realExecuteNum != null">
+          real_execute_num,
+      </if>
+      <if test="zipMd5Code != null and zipMd5Code != ''">
+        zip_md5_code,
+      </if>
+      <if test="taskZipPath != null and taskZipPath != ''">
+        task_zip_path,
+      </if>
+      <if test="isFinish != null">
+        is_finish,
+      </if>
+      <if test="isRecord != null">
+        is_record,
+      </if>
+      <if test="executeType != null">
+        execute_type,
+      </if>
+      <if test="cronTime != null">
+        cron_time,
+      </if>
+      <if test="executeTime != null">
+        execute_time,
+      </if>
+      <if test="isMerge != null">
+        is_merge,
+      </if>
+      <if test="executeCount != null">
+        execute_count,
+      </if>
+      <if test="resultFilePath != null and resultFilePath != ''">
+        result_file_path,
+      </if>
+      <if test="orderCode != null">
+        order_code,
+      </if>
+      <if test="successCount != null">
+        success_count,
+      </if>
+      <if test="failureCount != null">
+        failure_count,
+      </if>
+      <if test="successRate != null and successRate != ''">
+        success_rate,
+      </if>
+      <if test="oldCaseId != null">
+        old_case_id,
+      </if>
+      <if test="sysTaskId != null">
+        sys_task_id,
+      </if>
+      <if test="surveyTaskId != null">
+        survey_task_id,
+      </if>
+      <if test="createTime != null ">
+        create_time,
+      </if>
+      <if test="createPerson != null and createPerson != ''">
+        create_person,
+      </if>
+      <if test="updateTime != null ">
+        update_time,
+      </if>
+      <if test="updatePerson != null and updatePerson != ''">
+        update_person,
+      </if>
+    </trim>
+    <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+      <if test="caseId != null">
+        #{caseId, jdbcType=INTEGER},
+      </if>
+      <if test="caseNum != null and caseNum != ''">
+        #{caseNum, jdbcType=VARCHAR},
+      </if>
+      <if test="caseName != null and caseName != ''">
+        #{caseName, jdbcType=VARCHAR},
+      </if>
+      <if test="caseDesc != null and caseDesc != ''">
+        #{caseDesc, jdbcType=VARCHAR},
+      </if>
+      <if test="businessId != null">
+        #{businessId, jdbcType=INTEGER},
+      </if>
+      <if test="scriptId != null">
+        #{scriptId, jdbcType=INTEGER},
+      </if>
+      <if test="followId != null">
+        #{followId, jdbcType=VARCHAR},
+      </if>
+      <if test="retryCount != null">
+        #{retryCount, jdbcType=INTEGER},
+      </if>
+      <if test="realExecuteNum != null">
+        #{realExecuteNum},
+      </if>
+      <if test="zipMd5Code != null and zipMd5Code != ''">
+        #{zipMd5Code, jdbcType=VARCHAR},
+      </if>
+      <if test="taskZipPath != null and taskZipPath != ''">
+        #{taskZipPath, jdbcType=VARCHAR},
+      </if>
+      <if test="isFinish != null">
+        #{isFinish, jdbcType=INTEGER},
+      </if>
+      <if test="isRecord != null">
+        #{isRecord, jdbcType=INTEGER},
+      </if>
+      <if test="executeType != null">
+        #{executeType, jdbcType=INTEGER},
+      </if>
+      <if test="cronTime != null">
+        #{cronTime, jdbcType=VARCHAR},
+      </if>
+      <if test="executeTime != null">
+        #{executeTime, jdbcType=TIMESTAMP},
+      </if>
+      <if test="isMerge != null">
+        #{isMerge, jdbcType=INTEGER},
+      </if>
+      <if test="executeCount != null">
+        #{executeCount, jdbcType=INTEGER},
+      </if>
+      <if test="resultFilePath != null and resultFilePath != ''">
+        #{resultFilePath, jdbcType=VARCHAR},
+      </if>
+      <if test="orderCode != null">
+        #{orderCode, jdbcType=INTEGER},
+      </if>
+      <if test="successCount != null">
+        #{successCount, jdbcType=INTEGER},
+      </if>
+      <if test="failureCount != null">
+        #{failureCount, jdbcType=INTEGER},
+      </if>
+      <if test="successRate != null and successRate != ''">
+        #{successRate, jdbcType=VARCHAR},
+      </if>
+      <if test="oldCaseId != null">
+        #{oldCaseId, jdbcType=INTEGER},
+      </if>
+      <if test="sysTaskId != null">
+        #{sysTaskId, jdbcType=INTEGER},
+      </if>
+      <if test="surveyTaskId != null">
+        #{surveyTaskId, jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null ">
+        #{createTime, jdbcType=TIMESTAMP},
+      </if>
+      <if test="createPerson != null and createPerson != ''">
+        #{createPerson, jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null ">
+        #{updateTime, jdbcType=TIMESTAMP},
+      </if>
+      <if test="updatePerson != null and updatePerson != ''">
+        #{updatePerson, jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+
+  <insert id="saveAppCase" parameterType="com.cmit.testing.entity.app.AppCase" useGeneratedKeys="true" keyProperty="caseId">
+    INSERT INTO app_case
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="caseId != null">
+        case_id,
+      </if>
+      <if test="caseNum != null and caseNum != ''">
+        case_num,
+      </if>
+      <if test="caseName != null and caseName != ''">
+        case_name,
+      </if>
+      <if test="caseDesc != null and caseDesc != ''">
+        case_desc,
+      </if>
+      <if test="businessId != null">
+        business_id,
+      </if>
+      <if test="scriptId != null">
+        script_id,
+      </if>
+      <if test="followId != null">
+        follow_id,
+      </if>
+      <if test="retryCount != null">
+        retry_count,
+      </if>
+        <if test="realExecuteNum != null">
+            real_execute_num,
+        </if>
+      <if test="zipMd5Code != null and zipMd5Code != ''">
+        zip_md5_code,
+      </if>
+      <if test="taskZipPath != null and taskZipPath != ''">
+        task_zip_path,
+      </if>
+      <if test="isFinish != null">
+        is_finish,
+      </if>
+      <if test="isRecord != null">
+        is_record,
+      </if>
+      <if test="executeType != null">
+        execute_type,
+      </if>
+      <if test="cronTime != null">
+        cron_time,
+      </if>
+      <if test="executeTime != null">
+        execute_time,
+      </if>
+      <if test="isMerge != null">
+        is_merge,
+      </if>
+      <if test="executeCount != null">
+        execute_count,
+      </if>
+      <if test="resultFilePath != null and resultFilePath != ''">
+        result_file_path,
+      </if>
+      <if test="orderCode != null">
+        order_code,
+      </if>
+      <if test="successCount != null">
+        success_count,
+      </if>
+      <if test="failureCount != null">
+        failure_count,
+      </if>
+      <if test="successRate != null and successRate != ''">
+        success_rate,
+      </if>
+      <if test="oldCaseId != null">
+        old_case_id,
+      </if>
+      <if test="sysTaskId != null">
+        sys_task_id,
+      </if>
+      <if test="surveyTaskId != null">
+        survey_task_id,
+      </if>
+      <if test="createTime != null ">
+        create_time,
+      </if>
+      <if test="createPerson != null and createPerson != ''">
+        create_person,
+      </if>
+      <if test="updateTime != null ">
+        update_time,
+      </if>
+      <if test="updatePerson != null and updatePerson != ''">
+        update_person,
+      </if>
+    </trim>
+    <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+      <if test="caseId != null">
+        #{caseId, jdbcType=INTEGER},
+      </if>
+      <if test="caseNum != null and caseNum != ''">
+        #{caseNum, jdbcType=VARCHAR},
+      </if>
+      <if test="caseName != null and caseName != ''">
+        #{caseName, jdbcType=VARCHAR},
+      </if>
+      <if test="caseDesc != null and caseDesc != ''">
+        #{caseDesc, jdbcType=VARCHAR},
+      </if>
+      <if test="businessId != null">
+        #{businessId, jdbcType=INTEGER},
+      </if>
+      <if test="scriptId != null">
+        #{scriptId, jdbcType=INTEGER},
+      </if>
+      <if test="followId != null">
+        #{followId},
+      </if>
+      <if test="retryCount != null">
+        #{retryCount, jdbcType=INTEGER},
+      </if>
+        <if test="realExecuteNum != null">
+            #{realExecuteNum},
+        </if>
+      <if test="zipMd5Code != null and zipMd5Code != ''">
+        #{zipMd5Code, jdbcType=VARCHAR},
+      </if>
+      <if test="taskZipPath != null and taskZipPath != ''">
+        #{taskZipPath, jdbcType=VARCHAR},
+      </if>
+      <if test="isFinish != null">
+        #{isFinish, jdbcType=INTEGER},
+      </if>
+      <if test="isRecord != null">
+        #{isRecord, jdbcType=INTEGER},
+      </if>
+      <if test="executeType != null">
+        #{executeType, jdbcType=INTEGER},
+      </if>
+      <if test="cronTime != null">
+        #{cronTime, jdbcType=VARCHAR},
+      </if>
+      <if test="executeTime != null">
+        #{executeTime, jdbcType=TIMESTAMP},
+      </if>
+      <if test="isMerge != null">
+        #{isMerge, jdbcType=INTEGER},
+      </if>
+      <if test="executeCount != null">
+        #{executeCount, jdbcType=INTEGER},
+      </if>
+      <if test="resultFilePath != null and resultFilePath != ''">
+        #{resultFilePath, jdbcType=VARCHAR},
+      </if>
+      <if test="orderCode != null">
+        #{orderCode, jdbcType=INTEGER},
+      </if>
+      <if test="successCount != null">
+        #{successCount, jdbcType=INTEGER},
+      </if>
+      <if test="failureCount != null">
+        #{failureCount, jdbcType=INTEGER},
+      </if>
+      <if test="successRate != null and successRate != ''">
+        #{successRate, jdbcType=VARCHAR},
+      </if>
+      <if test="oldCaseId != null">
+        #{oldCaseId, jdbcType=INTEGER},
+      </if>
+      <if test="sysTaskId != null">
+        #{sysTaskId, jdbcType=INTEGER},
+      </if>
+      <if test="surveyTaskId != null">
+        #{surveyTaskId, jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null ">
+        #{createTime, jdbcType=TIMESTAMP},
+      </if>
+      <if test="createPerson != null and createPerson != ''">
+        #{createPerson, jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null ">
+        #{updateTime, jdbcType=TIMESTAMP},
+      </if>
+      <if test="updatePerson != null and updatePerson != ''">
+        #{updatePerson, jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <insert id="insert" parameterType="com.cmit.testing.entity.app.AppCase" useGeneratedKeys="true" keyProperty="caseId">
+    INSERT INTO app_case
+        ( case_id,case_num,case_name,case_desc,business_id,script_id,follow_id,retry_count,real_execute_num,zip_md5_code,task_zip_path,
+         is_finish,
+         is_record,
+        execute_type,
+        cron_time,
+       execute_time,
+      is_merge,
+        execute_count,
+          result_file_path,
+       order_code,
+       success_count,
+      failure_count,
+       success_rate,
+      old_case_id,
+       sys_task_id,
+        survey_task_id,
+        create_time,
+        create_person,
+        update_time,
+        update_person)
+  values (
+        #{caseId, jdbcType=INTEGER},
+        #{caseNum, jdbcType=VARCHAR},
+        #{caseName, jdbcType=VARCHAR},
+        #{caseDesc, jdbcType=VARCHAR},
+        #{businessId, jdbcType=INTEGER},
+        #{scriptId, jdbcType=INTEGER},
+        #{followId, jdbcType=VARCHAR},
+        #{retryCount, jdbcType=INTEGER},
+        #{realExecuteNum, jdbcType=INTEGER},
+        #{zipMd5Code, jdbcType=VARCHAR},
+        #{taskZipPath, jdbcType=VARCHAR},
+        #{isFinish, jdbcType=INTEGER},
+        #{isRecord, jdbcType=INTEGER},
+        #{executeType, jdbcType=INTEGER},
+        #{cronTime, jdbcType=VARCHAR},
+        #{executeTime, jdbcType=TIMESTAMP},
+        #{isMerge, jdbcType=INTEGER},
+        #{executeCount, jdbcType=INTEGER},
+        #{resultFilePath, jdbcType=VARCHAR},
+        #{orderCode, jdbcType=INTEGER},
+        #{successCount, jdbcType=INTEGER},
+        #{failureCount, jdbcType=INTEGER},
+        #{successRate, jdbcType=VARCHAR},
+        #{oldCaseId, jdbcType=INTEGER},
+        #{sysTaskId, jdbcType=INTEGER},
+        #{surveyTaskId, jdbcType=INTEGER},
+        #{createTime, jdbcType=TIMESTAMP},
+        #{createPerson, jdbcType=INTEGER},
+        #{updateTime, jdbcType=TIMESTAMP},
+        #{updatePerson, jdbcType=INTEGER})
+  </insert>
+
+  <delete id="deleteByIds" parameterType="java.lang.Integer">
+    DELETE FROM app_case
+    WHERE case_id IN
+    <foreach close=")" collection="ids" item="caseId" open="(" separator=",">
+      #{caseId, jdbcType=INTEGER}
+    </foreach>
+    OR old_case_id IN
+    <foreach close=")" collection="ids" item="caseId" open="(" separator=",">
+      #{caseId, jdbcType=INTEGER}
+    </foreach>
+  </delete>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    DELETE FROM app_case WHERE case_id = #{caseId, jdbcType=INTEGER}
+  </delete>
+
+    <!--更新用例执行状态：副本用例和原用例一起修改-->
+    <update id="updateExecuteStatusByMap" parameterType="java.util.Map">
+        UPDATE app_case
+        SET is_finish = #{isFinish,jdbcType=INTEGER}
+        WHERE case_id = #{caseId,jdbcType=INTEGER}
+        <if test="oldCaseId != null">
+            OR case_id = #{oldCaseId,jdbcType=INTEGER}
+        </if>
+    </update>
+
+    <!--根据oldCaseId和caseId修改用例及用例副本的相关信息-->
+  <update id="updateByPrimaryKeySelective" parameterType="com.cmit.testing.entity.app.AppCase">
+    update app_case
+    <set >
+      <if test="caseNum != null" >
+        case_num = #{caseNum,jdbcType=VARCHAR},
+      </if>
+      <if test="caseName != null" >
+        case_name = #{caseName,jdbcType=VARCHAR},
+      </if>
+      <if test="businessName != null" >
+        business_name = #{businessName,jdbcType=VARCHAR},
+      </if>
+      <if test="caseDesc != null" >
+        case_desc = #{caseDesc,jdbcType=VARCHAR},
+      </if>
+      <if test="businessId != null" >
+        business_id = #{businessId,jdbcType=INTEGER},
+      </if>
+      <if test="scriptId != null" >
+        script_id = #{scriptId,jdbcType=INTEGER},
+      </if>
+      <if test="followId != null">
+        follow_id = #{followId, jdbcType=VARCHAR},
+      </if>
+      <if test="retryCount != null" >
+        retry_count = #{retryCount,jdbcType=INTEGER},
+      </if>
+        <if test="realExecuteNum != null" >
+            real_execute_num = #{realExecuteNum,jdbcType=INTEGER},
+        </if>
+      <if test="zipMd5Code != null" >
+        zip_md5_code = #{zipMd5Code,jdbcType=VARCHAR},
+      </if>
+      <if test="taskZipPath != null" >
+        task_zip_path = #{taskZipPath,jdbcType=VARCHAR},
+      </if>
+      <if test="isFinish != null" >
+        is_finish = #{isFinish,jdbcType=INTEGER},
+      </if>
+      <if test="isRecord != null" >
+        is_record = #{isRecord,jdbcType=INTEGER},
+      </if>
+      <if test="executeType != null" >
+        execute_type = #{executeType,jdbcType=INTEGER},
+          cron_time =
+          (
+            CASE
+              WHEN execute_type = 0 THEN NULL
+              WHEN execute_type = 1 THEN #{cronTime,jdbcType=VARCHAR}
+              WHEN execute_type = 2 THEN #{cronTime,jdbcType=VARCHAR}
+              WHEN execute_type = 3 THEN NULL
+            END
+          ),
+          execute_time =
+          (
+              CASE
+                  WHEN execute_type = 0 THEN NULL
+                  WHEN execute_type = 1 THEN #{executeTime,jdbcType=VARCHAR}
+                  WHEN execute_type = 2 THEN NULL
+                  WHEN execute_type = 3 THEN NULL
+              END
+          ),
+      </if>
+      <if test="isMerge != null" >
+        is_merge = #{isMerge,jdbcType=INTEGER},
+      </if>
+      <if test="executeCount != null" >
+        execute_count = #{executeCount,jdbcType=INTEGER},
+      </if>
+      <if test="resultFilePath != null" >
+        result_file_path = #{resultFilePath,jdbcType=VARCHAR},
+      </if>
+      <if test="orderCode != null" >
+        order_code = #{orderCode,jdbcType=INTEGER},
+      </if>
+      <if test="successCount != null" >
+        success_count = #{successCount,jdbcType=INTEGER},
+      </if>
+      <if test="failureCount != null" >
+        failure_count = #{failureCount,jdbcType=INTEGER},
+      </if>
+      <if test="successRate != null" >
+        success_rate = #{successRate,jdbcType=VARCHAR},
+      </if>
+      <if test="sysTaskId != null" >
+        sys_task_id = #{sysTaskId,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createPerson != null" >
+        create_person = #{createPerson,jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updatePerson != null" >
+        update_person = #{updatePerson,jdbcType=INTEGER},
+      </if>
+    </set>
+    where
+      case_id = #{caseId,jdbcType=INTEGER}
+      <if test="oldCaseId != null">
+          OR case_id = #{oldCaseId,jdbcType=INTEGER}
+      </if>
+
+  </update>
+
+    <!--统计App侧，所有的用例数，未执行数，执行完成数，执行中数-->
+  <select id="queryAppCaseCount" resultType="java.util.Map">
+    SELECT
+	  COUNT(1) AS 'appCaseNum' ,
+	  COUNT(IF(is_finish = 0, TRUE, NULL)) AS 'noDoNum',
+      COUNT(IF(is_finish = 1, TRUE, NULL)) AS 'doingNum',
+      COUNT(IF(is_finish = 2, TRUE, NULL)) AS 'doneNum'
+	FROM app_case
+	WHERE old_case_id = 0;
+  </select>
+
+    <!--根据业务ID获取APP侧 各执行状态的用例数-->
+    <select id="getExecuteStatusCountByBusiness" resultType="java.util.Map" parameterType="java.lang.Integer">
+        SELECT
+          COUNT(case_id) AS 'appCaseNum',
+          COUNT(IF(is_finish = 0, TRUE, NULL)) AS 'noDoNum',
+          COUNT(IF(is_finish = 1, TRUE, NULL)) AS 'doingNum',
+          COUNT(IF(is_finish = 2, TRUE, NULL)) AS 'doneNum'
+        FROM app_case
+        WHERE old_case_id = 0
+        <if test="businessId != null">
+            AND business_id = #{businessId}
+        </if>
+    </select>
+
+  <!--众测任务相关的SQL-->
+  <resultMap id="AppReportMap" type="com.cmit.testing.entity.vo.SurveyTaskReportVO">
+    <result column="success_rote" property="successRote" jdbcType="VARCHAR"/>
+    <result column="survey_task_id" property="surveyTaskId" jdbcType="INTEGER" />
+    <result column="score" property="score" jdbcType="VARCHAR"/>
+    <result column="source" property="source" jdbcType="INTEGER"/>
+    <result column="testcase_id" property="testcaseId" jdbcType="INTEGER"/>
+    <result column="testcase_name" property="testcaseName" jdbcType="VARCHAR"/>
+    <result column="avg_click_num" property="avgClickNum" jdbcType="VARCHAR"/>
+    <result column="click_score" property="clickScore" jdbcType="VARCHAR"/>
+    <result column="avg_input_num" property="avgInputNum" jdbcType="VARCHAR"/>
+    <result column="input_score" property="inputScore" jdbcType="VARCHAR"/>
+    <result column="avg_consume_time" property="avgConsumeTime" jdbcType="VARCHAR"/>
+    <result column="consume_time_score" property="consumeTimeScore" jdbcType="VARCHAR"/>
+    <result column="avg_msg_consume_time" property="avgMsgConsumeTime" jdbcType="VARCHAR"/>
+    <result column="msg_consume_time_score" property="msgConsumeTimeScore" jdbcType="VARCHAR"/>
+    <result column="province" property="province" jdbcType="VARCHAR"/>
+  </resultMap>
+  <!--根据用例id集合、众测任务Id和省名称汇总用例报告数据-->
+  <select id="getCaseReportList" resultMap="AppReportMap">
+    SELECT
+      a.*,
+      IFNULL((SELECT score FROM app_survey_task_score WHERE testcase_id = a.testcase_id AND survey_task_id = a.survey_task_id AND type = 2 AND ( a.avg_click_num > CAST( `start` AS DECIMAL) OR `start` = 0 ) AND ( `end` IS NULL OR a.avg_click_num <![CDATA[ <= ]]> CAST( `end` AS DECIMAL) ) LIMIT 1 ),100) as 'click_score',
+      IFNULL((SELECT score FROM app_survey_task_score WHERE testcase_id = a.testcase_id AND survey_task_id = a.survey_task_id AND type = 3 AND ( a.avg_input_num > CAST( `start` AS DECIMAL) OR `start` = 0 ) AND ( `end` IS NULL OR a.avg_input_num <![CDATA[ <= ]]> CAST( `end` AS DECIMAL) ) LIMIT 1), 100) as 'input_score',
+      IFNULL((SELECT score FROM app_survey_task_score WHERE testcase_id = a.testcase_id AND survey_task_id = a.survey_task_id AND type = 4 AND ( a.avg_msg_consume_time > CAST( `start` AS DECIMAL) OR `start` = 0 ) AND ( `end` IS NULL OR a.avg_msg_consume_time <![CDATA[ <= ]]> CAST( `end` AS DECIMAL) ) LIMIT 1), 100) as 'msg_consume_time_score',
+      IFNULL((SELECT score FROM app_survey_task_score WHERE testcase_id = a.testcase_id AND survey_task_id = a.survey_task_id AND type = 1 AND ( a.avg_consume_time > CAST( `start` AS DECIMAL) OR `start` = 0 ) AND ( `end` IS NULL OR a.avg_consume_time <![CDATA[ <= ]]> CAST( `end` AS DECIMAL) ) LIMIT 1), 100) as 'consume_time_score',
+      success_rote AS 'score',
+      "1" AS 'source'
+    FROM
+    (
+      SELECT
+        c.old_case_id as 'testcase_id',
+        c.case_name as 'testcase_name',
+        c.survey_task_id,
+        (0+CAST(IFNULL(a.avg_click_num, 0) AS CHAR)) as 'avg_click_num',
+        (0+CAST(IFNULL(a.avg_input_num, 0)AS CHAR)) as 'avg_input_num',
+        (0+CAST(IFNULL(a.avg_msg_consume_time, 0)AS CHAR)) as 'avg_msg_consume_time',
+        (0+CAST(IFNULL(a.avg_consume_time, 0)AS CHAR)) as 'avg_consume_time',
+        (0+CAST(IFNULL(b.success_rote, 0)AS CHAR)) as 'success_rote'
+      FROM app_case as c
+        LEFT JOIN
+          (
+          SELECT
+            a.success_num / ( a.success_num + a.failure_num ) * 100 as 'success_rote',
+            a.testcase_id,
+            survey_task_id
+          FROM
+            (
+              SELECT
+                SUM( CASE a.execute_result WHEN 0 THEN 1 ELSE 0 END ) as 'success_num',
+                SUM( CASE a.execute_result WHEN 1 THEN 1 ELSE 0 END ) as 'failure_num',
+                b.old_case_id as 'testcase_id',
+                b.survey_task_id
+              FROM
+                app_case_result as a
+                LEFT JOIN app_case_device AS d ON d.id = a.execute_id
+                LEFT JOIN app_case as b ON b.case_id = a.case_id
+              WHERE
+                b.survey_task_id = #{surveyTaskId, jdbcType=INTEGER}
+                <if test="province != null and province != ''">
+                  AND d.province like concat('%',#{province, jdbcType=VARCHAR},'%')
+                </if>
+                GROUP BY
+                b.old_case_id
+            ) as a
+          ) as b on b.testcase_id = c.old_case_id
+        LEFT JOIN
+          (
+            SELECT
+              c.old_case_id as 'testcase_id',
+              AVG( click_num ) as 'avg_click_num',
+              AVG( input_num ) as 'avg_input_num',
+              AVG( consume_time ) / 1000 as 'avg_consume_time',
+              avg( ( SELECT avg( consume_time ) FROM app_record_step WHERE command = 'smsVerify' GROUP BY case_result_id HAVING case_result_id = r.result_id ) ) / 1000 as 'avg_msg_consume_time' -- 短信送达耗时
+            FROM
+              app_case_result AS r
+              LEFT JOIN app_case_device AS d ON d.id = r.execute_id
+            LEFT JOIN app_case as c on c.case_id = r.case_id
+            WHERE
+              r.execute_result = 0 AND c.survey_task_id = #{surveyTaskId, jdbcType=INTEGER}
+              <if test="province != null and province != ''">
+                AND d.province like concat('%',#{province, jdbcType=VARCHAR},'%')
+              </if>
+            GROUP BY c.old_case_id
+            HAVING c.old_case_id != 0
+          ) as a on a.testcase_id = b.testcase_id
+        WHERE 1=1 AND c.survey_task_id = #{surveyTaskId, jdbcType=INTEGER}
+      ) as a
+    WHERE 1=1
+      <if test="appCaseIdList!=null and appCaseIdList.size>0" >
+        AND a.testcase_id IN
+        <foreach collection="appCaseIdList" open="(" close=")" separator="," item="caseId">
+          #{caseId}
+        </foreach>
+      </if>
+  </select>
+
+  <!--根据用例id集合、众测任务Id汇总用例报告数据-->
+  <select id="getCaseProvinceReportList" resultMap="AppReportMap">
+    SELECT
+      a.*,
+      IFNULL((SELECT score FROM app_survey_task_score WHERE testcase_id = a.testcase_id AND survey_task_id = a.survey_task_id AND type = 2 AND ( a.avg_click_num > CAST( `start` AS DECIMAL) OR `start` = 0 ) AND ( `end` IS NULL OR a.avg_click_num <![CDATA[ <= ]]> CAST( `end` AS DECIMAL) ) LIMIT 1 ),100) as 'click_score',
+      IFNULL((SELECT score FROM app_survey_task_score WHERE testcase_id = a.testcase_id AND survey_task_id = a.survey_task_id AND type = 3 AND ( a.avg_input_num > CAST( `start` AS DECIMAL) OR `start` = 0 ) AND ( `end` IS NULL OR a.avg_input_num <![CDATA[ <= ]]> CAST( `end` AS DECIMAL) ) LIMIT 1), 100) as 'input_score',
+      IFNULL((SELECT score FROM app_survey_task_score WHERE testcase_id = a.testcase_id AND survey_task_id = a.survey_task_id AND type = 4 AND ( a.avg_msg_consume_time > CAST( `start` AS DECIMAL) OR `start` = 0 ) AND ( `end` IS NULL OR a.avg_msg_consume_time <![CDATA[ <= ]]> CAST( `end` AS DECIMAL) ) LIMIT 1), 100) as 'msg_consume_time_score',
+      IFNULL((SELECT score FROM app_survey_task_score WHERE testcase_id = a.testcase_id AND survey_task_id = a.survey_task_id AND type = 1 AND ( a.avg_consume_time > CAST( `start` AS DECIMAL) OR `start` = 0 ) AND ( `end` IS NULL OR a.avg_consume_time <![CDATA[ <= ]]> CAST( `end` AS DECIMAL) ) LIMIT 1), 100) as 'consume_time_score',
+      success_rote AS 'score',
+      "1" as 'source'
+    FROM
+    (
+    SELECT
+      c.old_case_id as 'testcase_id',
+      c.case_name as 'testcase_name',
+      c.survey_task_id,
+      b.province,
+      (0+CAST(IFNULL(a.avg_click_num, 0) AS CHAR)) as 'avg_click_num',
+      (0+CAST(IFNULL(a.avg_input_num, 0)AS CHAR)) as 'avg_input_num',
+      (0+CAST(IFNULL(a.avg_msg_consume_time, 0)AS CHAR)) as 'avg_msg_consume_time',
+      (0+CAST(IFNULL(a.avg_consume_time, 0)AS CHAR)) as 'avg_consume_time',
+      (0+CAST(IFNULL(b.success_rote, 0)AS CHAR)) as 'success_rote'
+    FROM app_case as c
+      LEFT JOIN
+        (
+        SELECT
+          a.success_num / ( a.success_num + a.failure_num ) * 100 as 'success_rote',
+          a.testcase_id,
+          a.province,
+          survey_task_id
+        FROM
+          (
+          SELECT
+            SUM( CASE a.execute_result WHEN 0 THEN 1 ELSE 0 END ) as 'success_num',
+            SUM( CASE a.execute_result WHEN 1 THEN 1 ELSE 0 END ) as 'failure_num',
+            d.province,
+            b.old_case_id as 'testcase_id',
+            b.survey_task_id
+          FROM
+            app_case_result as a
+            LEFT JOIN app_case_device AS d ON d.id = a.execute_id
+            LEFT JOIN app_case as b ON b.case_id = a.case_id
+          WHERE
+            b.survey_task_id = #{surveyTaskId, jdbcType=INTEGER}
+            GROUP BY
+            b.old_case_id, d.province
+          ) AS a
+        ) AS b ON b.testcase_id = c.old_case_id
+      LEFT JOIN
+        (
+          SELECT
+            c.old_case_id as 'testcase_id',
+            d.province,
+            AVG( click_num ) as 'avg_click_num',
+            AVG( input_num ) as 'avg_input_num',
+            AVG( consume_time ) / 1000 as 'avg_consume_time',
+            AVG( ( SELECT AVG( consume_time ) FROM app_record_step WHERE command = 'smsVerify' GROUP BY case_result_id HAVING case_result_id = r.result_id ) ) / 1000 as 'avg_msg_consume_time' -- 短信送达耗时
+          FROM
+            app_case_result AS r
+            LEFT JOIN app_case_device AS d ON d.id = r.execute_id
+            LEFT JOIN app_case as c on c.case_id = r.case_id
+          WHERE
+            r.execute_result = 0 AND c.survey_task_id = #{surveyTaskId, jdbcType=INTEGER}
+            GROUP BY c.old_case_id, d.province
+            HAVING c.old_case_id != 0
+        ) AS a ON ( a.testcase_id = b.testcase_id AND a.province= b.province )
+      WHERE 1=1
+        AND c.survey_task_id = #{surveyTaskId, jdbcType=INTEGER}
+        AND b.province IS NOT NULL
+      ) as a
+    WHERE 1=1
+    <if test="appCaseIdList!=null and appCaseIdList.size>0" >
+      AND a.testcase_id IN
+      <foreach collection="appCaseIdList" open="(" close=")" separator="," item="caseId">
+        #{caseId}
+      </foreach>
+    </if>
+  </select>
+  <select id="getExcuteNumById"  resultType="java.lang.Long">
+      SELECT
+           DISTINCT (execute_num) AS excuteNum
+      FROM app_case_device AS cd
+           LEFT JOIN app_case AS c ON cd.case_id=c.case_id
+      WHERE execute_num != 0 AND c.sys_task_id IS NULL AND c.survey_task_id IS NULL
+          <if test="caseId != null">
+              and c.old_case_id = #{caseId,jdbcType=INTEGER}
+          </if>
+          AND cd.execute_status=2
+          ORDER BY execute_num DESC
+  </select>
+
+
+    <!--批量修改用例信息-->
+    <update id="batchUpdateAppCase" parameterType="java.util.List">
+        UPDATE app_case
+        <trim prefix="set" suffixOverrides=",">
+          <trim prefix="follow_id=" suffix=",">
+            <foreach collection="caseList" item="appCase" open="CASE case_id" close="END" separator="  ">
+                WHEN #{appCase.caseId} THEN #{appCase.followId}
+            </foreach>
+          </trim>
+        </trim>
+        <where>
+          case_id IN
+            <foreach collection="caseList" item="appCase" open="(" close=")" separator=",">
+                #{appCase.caseId}
+            </foreach>
+        </where>
+    </update>
+
+    <select id="getTestCaseByIds" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+        select <include refid="Base_Column_List" />
+        from app_case
+        WHERE case_id IN
+        <foreach close=")" collection="ids" item="id" open="(" separator=",">
+            #{id,jdbcType=INTEGER}
+        </foreach>
+    </select>
+    <!---->
+    <resultMap id="AppCaseBoMap" type="com.cmit.testing.entity.app.AppCaseBO">
+        <id column="case_id" jdbcType="INTEGER" property="caseId" />
+        <result column="follow_id" jdbcType="VARCHAR" property="followId" />
+        <result column="is_finish" jdbcType="INTEGER" property="isFinish" />
+        <result column="old_case_id" jdbcType="INTEGER" property="oldCaseId" />
+        <collection property="caseDeviceList" ofType="com.cmit.testing.entity.app.AppCaseDevice">
+            <id column="id" jdbcType="INTEGER" property="id" />
+            <result column="device_id" property="deviceId" jdbcType="INTEGER" />
+            <result column="param_type" property="paramType" jdbcType="VARCHAR" />
+            <result column="execute_num" property="executeNum" jdbcType="INTEGER" />
+            <result column="pass_status" property="passStatus" jdbcType="TINYINT" />
+            <result column="execute_status" property="executeStatus" jdbcType="TINYINT" />
+            <result column="province" property="province" jdbcType="VARCHAR" />
+            <result column="tel_num" property="telNum" jdbcType="VARCHAR" />
+            <result column="execute_time" property="executeTime" jdbcType="TIMESTAMP" />
+        </collection>
+    </resultMap>
+    <select id="getAppCaseBoByCaseId" resultMap="AppCaseBoMap">
+      SELECT c.case_id, c.follow_id, c.is_finish, c.old_case_id, cd.id, cd.device_id, cd.param_type, cd.execute_num,
+      cd.pass_status, cd.execute_status, cd.province, cd.tel_num, cd.execute_time
+      FROM app_case AS c LEFT JOIN app_case_device AS cd ON cd.case_id = c.case_id
+      WHERE c.case_id = #{caseId}
+    </select>
+</mapper>

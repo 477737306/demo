@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cmit.testing.dao.app.AppCaseDeviceMapper" >
+  <resultMap id="BaseResultMap" type="com.cmit.testing.entity.app.AppCaseDevice" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="case_id" property="caseId" jdbcType="INTEGER" />
+    <result column="device_id" property="deviceId" jdbcType="INTEGER" />
+    <result column="param_type" property="paramType" jdbcType="VARCHAR" />
+    <result column="execute_num" property="executeNum" jdbcType="INTEGER" />
+    <result column="pass_status" property="passStatus" jdbcType="TINYINT" />
+    <result column="failure_reason" property="failureReason" jdbcType="VARCHAR"/>
+    <result column="execute_status" property="executeStatus" jdbcType="TINYINT" />
+    <result column="is_push" property="isPush" jdbcType="TINYINT" />
+    <result column="province" property="province" jdbcType="VARCHAR" />
+    <result column="tel_num" property="telNum" jdbcType="VARCHAR" />
+    <result column="execute_time" property="executeTime" jdbcType="TIMESTAMP" />
+    <!--扩展字段-->
+    <result column="device_sn" property="deviceSn" jdbcType="VARCHAR" />
+    <result column="use_status" property="useStatus" jdbcType="VARCHAR" />
+    <result column="online_status" property="onlineStatus" jdbcType="VARCHAR" />
+    <result column="proxy_id" property="proxyId" jdbcType="INTEGER" />
+  </resultMap>
+
+  <sql id="Base_Column_List" >
+    id, case_id, device_id, param_type, execute_num, pass_status,failure_reason, execute_status, is_push, province,
+    tel_num, execute_time
+  </sql>
+
+  <sql id="Ext_Column_List" >
+    acd.id, acd.case_id, acd.device_id, acd.param_type, acd.execute_num, acd.pass_status,acd.failure_reason, acd.execute_status, acd.is_push, acd.province,
+    acd.tel_num, acd.execute_time, ad.device_sn, ad.use_status, ad.online_status, ad.proxy_id
+  </sql>
+
+  <!--根据原用例ID和众测任务ID获取执行的手机设备-->
+  <select id="getBySysSurveyIdAndCaseId" resultMap="BaseResultMap">
+	SELECT cd.*
+	FROM app_case_device AS cd
+		LEFT JOIN app_case AS c ON c.case_id = cd.case_id
+	WHERE  c.survey_task_id = #{surveyTaskId} AND c.old_case_id = #{caseId}
+  </select>
+
+  <!--获取所有正在执行中的任务-->
+  <select id="getRunningTaskList" resultType="com.cmit.testing.entity.vo.AppExecutingTaskVO">
+    SELECT
+      cd.id,
+      cd.case_id AS 'caseId',
+      c.old_case_id AS 'oldCaseId',
+      (SELECT case_name FROM app_case WHERE old_case_id = 0 AND case_id = c.old_case_id) AS 'caseName',
+      cd.device_id AS 'deviceId',
+      d.device_sn AS 'deviceSn',
+      cd.total_steps AS 'totalSteps',
+      cd.current_step AS 'currentStep',
+      cd.execute_time AS 'executeTime'
+    FROM
+      app_case_device AS cd
+      LEFT JOIN app_case AS c ON c.case_id = cd.case_id
+      LEFT JOIN app_device AS d ON d.device_id = cd.device_id
+    WHERE
+      cd.execute_status = 1 AND cd.param_type = 1 AND cd.execute_time IS NOT NULL
+  </select>
+
+  <select id="selectByCaseDevice" resultMap="BaseResultMap" parameterType="com.cmit.testing.entity.app.AppCaseDevice">
+    SELECT <include refid="Base_Column_List" />
+    FROM app_case_device
+    <where>
+      <if test="id != null">
+        AND id = #{id, jdbcType=INTEGER}
+      </if>
+      <if test="caseId != null">
+        AND case_id = #{caseId, jdbcType=INTEGER}
+      </if>
+      <if test="deviceId != null">
+        AND device_id = #{deviceId, jdbcType=INTEGER}
+      </if>
+      <if test="paramType != null and paramType != ''">
+        and param_type = #{paramType, jdbcType=VARCHAR}
+      </if>
+      <if test="executeNum != null">
+        and execute_num = #{executeNum, jdbcType=INTEGER}
+      </if>
+      <if test="deviceSn != null">
+        AND device_id = ( SELECT device_id FROM app_device WHERE device_sn = #{deviceSn, jdbcType=VARCHAR})
+      </if>
+      <if test="telNum != null">
+        AND tel_num = #{telNum, jdbcType=VARCHAR}
+      </if>
+      <if test="isPush != null">
+        AND is_push = #{isPush, jdbcType=INTEGER}
+      </if>
+      <if test="executeStatus != null">
+        AND execute_status = #{executeStatus, jdbcType=INTEGER}
+      </if>
+      <if test="passStatus != null">
+        AND pass_status = #{passStatus, jdbcType=INTEGER}
+      </if>
+      <if test="province != null">
+        AND province = #{province, jdbcType=VARCHAR}
+      </if>
+    </where>
+  </select>
+
+  <!--获取所有APP执行中的任务-->
+  <select id="getAllRunningAppCase" parameterType="com.cmit.testing.entity.vo.CaseExcResultVO" resultType="com.cmit.testing.entity.vo.AppCaseExecuteVO">
+    SELECT
+        b.`name` AS 'businessName',
+        cd.tel_num AS 'telNum',
+        cd.case_id AS 'caseId',
+        "APP" AS 'type',
+        c.case_name AS 'caseName',
+        c.case_num AS 'caseNum',
+        c.business_id AS 'businessId',
+        c.execute_count AS 'executeCount',
+        ( SELECT `name` FROM sys_user WHERE id = c.create_person ) AS 'executorName',
+        cd.execute_status AS 'executeStatus',
+        cd.province AS 'province',
+        cd.pass_status AS 'passStatus',
+        cd.execute_time AS 'executeTime',
+        s.script_name AS 'scriptName',
+        project.`name` as 'projectName'
+    FROM
+        app_case_device AS cd
+        LEFT JOIN app_case AS c ON c.case_id = cd.case_id
+        LEFT JOIN app_script AS s ON s.script_id = c.script_id
+        LEFT JOIN business AS b ON b.id = c.business_id
+        left JOIN project ON b.project_id=project.id
+
+    WHERE
+        1 = 1
+        <if test="testcastName != null and testcastName != ''">
+          AND c.case_name = LIKE CONCAT('%', #{testcastName, jdbcType=VARCHAR }, '%')
+        </if>
+        <if test="province != null and province != ''">
+          AND cd.province = #{province}
+        </if>
+        <if test="executeNum != null">
+          AND c.execute_count = #{executeNum}
+        </if>
+        AND cd.execute_status = '1'
+        AND cd.param_type = '1'
+  </select>
+
+  <!--统计用例执行的成功数和失败数-->
+  <select id="getCountByCaseId" parameterType="java.lang.Integer" resultType="map">
+    SELECT
+    COUNT(CASE cd.pass_status WHEN 0 THEN cd.pass_status END) AS failureCount
+    ,COUNT(CASE cd.pass_status WHEN 1 THEN cd.pass_status END) AS successCount
+    ,COUNT(1) as sumCount
+    FROM app_case_device as cd
+    WHERE cd.case_id = #{caseId, jdbcType=INTEGER}
+  </select>
+
+  <!--根据当前设备唯一标识查询该设备要执行的副本用例-->
+  <select id="getCaseIdByDeviceSn" parameterType="java.lang.String" resultType="com.cmit.testing.entity.app.AppCase">
+    SELECT
+        c.case_id,
+        c.case_num,
+        c.case_name,
+        c.business_id,
+        c.script_id,
+        c.follow_id,
+        c.retry_count,
+        o.zip_md5_code,
+        o.task_zip_path,
+        c.is_finish,
+        c.is_record,
+        c.execute_type,
+        c.cron_time,
+        c.execute_time,
+        c.execute_count,
+        c.old_case_id,
+        c.survey_task_id,
+        c.sys_task_id
+    FROM
+        app_case AS c
+        LEFT JOIN ( SELECT task_zip_path, zip_md5_code, case_id FROM app_case WHERE old_case_id = 0 ) AS o ON o.case_id = c.old_case_id
+        LEFT JOIN app_case_device AS cd ON cd.case_id = c.case_id
+        LEFT JOIN app_device AS d ON d.device_id = cd.device_id
+    WHERE
+        cd.param_type = 1
+        AND old_case_id != 0
+        AND cd.execute_status = 0
+        AND cd.is_push != 2
+        AND d.device_sn = #{deviceSn, jdbcType=VARCHAR}
+    ORDER BY c.case_id ASC
+  </select>
+
+  <!--获取最新批次号  该方法已废弃-->
+  <select id="getMaxExecuteNum" resultType="java.util.Map" parameterType="java.lang.Integer">
+      SELECT MAX(execute_num) AS maxNum FROM app_case_device WHERE case_id = #{appCaseId}
+  </select>
+
+  <select id="getListByCaseId" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    SELECT
+        <include refid="Ext_Column_List" />
+    FROM
+        app_case_device AS acd
+        LEFT JOIN app_device AS ad ON acd.device_id = ad.device_id
+    WHERE
+        acd.case_id = #{caseId, jdbcType=INTEGER}
+  </select>
+
+  <select id="getListByCondition" resultMap="BaseResultMap" parameterType="com.cmit.testing.entity.app.AppCaseDevice">
+    SELECT <include refid="Ext_Column_List" />
+    FROM app_case_device AS acd LEFT JOIN app_device AS ad ON acd.device_id = ad.device_id
+    <where>
+      <if test="id != null and id != ''">
+        AND acd.id = #{id, jdbcType=INTEGER}
+      </if>
+      <if test="caseId != null and caseId != ''">
+        AND acd.case_id = #{caseId, jdbcType=INTEGER}
+      </if>
+      <if test="deviceId != null and deviceId != ''">
+        AND acd.device_id = #{deviceId, jdbcType=INTEGER}
+      </if>
+      <if test="deviceSn != null and deviceSn != ''">
+        AND ad.device_sn = #{deviceSn, jdbcType=VARCHAR}
+      </if>
+      <if test="executeNum != null and executeNum != ''">
+        AND acd.execute_num = #{executeNum, jdbcType=INTEGER}
+      </if>
+      <if test="passStatus != null and passStatus != ''">
+        AND acd.pass_status = #{passStatus, jdbcType=TINYINT}
+      </if>
+      <if test="executeStatus != null and executeStatus != ''">
+        AND acd.execute_status = #{executeStatus, jdbcType=TINYINT}
+      </if>
+      <if test="isPush != null and isPush != ''">
+        AND acd.is_push = #{isPush, jdbcType=TINYINT}
+      </if>
+      <if test="useStatus != null and useStatus != ''">
+        AND ad.use_status = #{useStatus, jdbcType=VARCHAR}
+      </if>
+      <if test="onlineStatus != null and onlineStatus != ''">
+        AND ad.online_status = #{onlineStatus, jdbcType=VARCHAR}
+      </if>
+    </where>
+  </select>
+
+  <select id="getListByNotFinish" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    SELECT
+    <include refid="Base_Column_List" />
+    FROM app_case_device
+    WHERE case_id = #{caseId, jdbcType=INTEGER} AND execute_status IN
+    <foreach close=")" collection="statusList" item="executeStatus" open="(" separator=",">
+      #{executeStatus, jdbcType=TINYINT}
+    </foreach>
+  </select>
+
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select
+    <include refid="Base_Column_List" />
+    from app_case_device
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from app_case_device
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <delete id="deletByReustId" parameterType="java.lang.Integer" >
+    delete from app_case_device
+    where id in (select execute_id from app_case_result where result_id in
+    <foreach close=")" collection="ids" item="testCaseReportId" open="(" separator=",">
+      #{testCaseReportId, jdbcType=INTEGER}
+    </foreach>
+    )
+  </delete>
+  <delete id="deletByExecuteId" parameterType="java.lang.Integer" >
+  delete from app_case_device
+  where id in
+  <foreach close=")" collection="ids" item="executeId" open="(" separator=",">
+    #{executeId, jdbcType=INTEGER}
+  </foreach>
+
+  </delete>
+  <delete id="deleteByIds" parameterType="java.lang.Integer" >
+    DELETE FROM app_case_device
+    WHERE id IN
+    <foreach close=")" collection="ids" item="id" open="(" separator=",">
+      #{id,jdbcType=INTEGER}
+    </foreach>
+  </delete>
+
+  <!--根据用例ID删除-->
+  <delete id="deleteDeviceByCaseIds" parameterType="java.lang.Integer" >
+    DELETE FROM app_case_device
+    WHERE case_id IN
+      <foreach close=")" collection="caseIdList" item="caseId" open="(" separator=",">
+        #{caseId,jdbcType=INTEGER}
+      </foreach>
+  </delete>
+
+  <insert id="insert" parameterType="com.cmit.testing.entity.app.AppCaseDevice" >
+    insert into app_case_device (id, case_id, device_id, param_type,
+      execute_num, pass_status, execute_status, 
+      is_push, province, tel_num, 
+      execute_time)
+    values (#{id,jdbcType=INTEGER}, #{caseId,jdbcType=INTEGER}, #{deviceId,jdbcType=INTEGER}, #{paramType,jdbcType=VARCHAR},
+      #{executeNum,jdbcType=INTEGER}, #{passStatus,jdbcType=TINYINT}, #{executeStatus,jdbcType=TINYINT},
+      #{isPush,jdbcType=TINYINT}, #{province,jdbcType=VARCHAR}, #{telNum,jdbcType=VARCHAR},
+      #{executeTime,jdbcType=TIMESTAMP})
+  </insert>
+
+
+  <insert id="insertSelective" parameterType="com.cmit.testing.entity.app.AppCaseDevice" useGeneratedKeys="true" keyProperty="id">
+    insert into app_case_device
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="caseId != null" >
+        case_id,
+      </if>
+      <if test="deviceId != null" >
+        device_id,
+      </if>
+      <if test="paramType != null" >
+        param_type,
+      </if>
+      <if test="executeNum != null" >
+        execute_num,
+      </if>
+      <if test="passStatus != null" >
+        pass_status,
+      </if>
+      <if test="executeStatus != null" >
+        execute_status,
+      </if>
+      <if test="isPush != null" >
+        is_push,
+      </if>
+      <if test="province != null" >
+        province,
+      </if>
+      <if test="telNum != null" >
+        tel_num,
+      </if>
+      <if test="executeTime != null" >
+        execute_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="caseId != null" >
+        #{caseId,jdbcType=INTEGER},
+      </if>
+      <if test="deviceId != null" >
+        #{deviceId,jdbcType=INTEGER},
+      </if>
+      <if test="paramType != null" >
+        #{paramType,jdbcType=VARCHAR},
+      </if>
+      <if test="executeNum != null" >
+        #{executeNum,jdbcType=INTEGER},
+      </if>
+      <if test="passStatus != null" >
+        #{passStatus,jdbcType=TINYINT},
+      </if>
+      <if test="executeStatus != null" >
+        #{executeStatus,jdbcType=TINYINT},
+      </if>
+      <if test="isPush != null" >
+        #{isPush,jdbcType=TINYINT},
+      </if>
+      <if test="province != null" >
+        #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="telNum != null" >
+        #{telNum,jdbcType=VARCHAR},
+      </if>
+      <if test="executeTime != null" >
+        #{executeTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.cmit.testing.entity.app.AppCaseDevice" >
+    update app_case_device
+    <set >
+      <if test="caseId != null" >
+        case_id = #{caseId,jdbcType=INTEGER},
+      </if>
+      <if test="deviceId != null" >
+        device_id = #{deviceId,jdbcType=INTEGER},
+      </if>
+      <if test="paramType != null" >
+        param_type = #{paramType,jdbcType=VARCHAR},
+      </if>
+      <if test="executeNum != null" >
+        execute_num = #{executeNum,jdbcType=INTEGER},
+      </if>
+      <if test="passStatus != null" >
+        pass_status = #{passStatus,jdbcType=TINYINT},
+      </if>
+      <if test="totalSteps != null">
+        total_steps = #{totalSteps}
+      </if>
+      <if test="currentStep != null">
+        current_step = #{currentStep}
+      </if>
+      <if test="executeStatus != null" >
+        execute_status = #{executeStatus,jdbcType=TINYINT},
+      </if>
+      <if test="isPush != null" >
+        is_push = #{isPush,jdbcType=TINYINT},
+      </if>
+      <if test="province != null" >
+        province = #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="telNum != null" >
+        tel_num = #{telNum,jdbcType=VARCHAR},
+      </if>
+      <if test="executeTime != null" >
+        execute_time = #{executeTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="failureReason != null">
+        failure_reason = #{failureReason, jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.cmit.testing.entity.app.AppCaseDevice" >
+    update app_case_device
+    set case_id = #{caseId,jdbcType=INTEGER},
+      device_id = #{deviceId,jdbcType=INTEGER},
+      param_type = #{paramType,jdbcType=INTEGER},
+      execute_num = #{executeNum,jdbcType=INTEGER},
+      pass_status = #{passStatus,jdbcType=TINYINT},
+      execute_status = #{executeStatus,jdbcType=TINYINT},
+      is_push = #{isPush,jdbcType=TINYINT},
+      province = #{province,jdbcType=VARCHAR},
+      tel_num = #{telNum,jdbcType=VARCHAR},
+      execute_time = #{executeTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateStatusByDeviceSnAndCaseId" parameterType="com.cmit.testing.entity.app.AppCaseDevice">
+    UPDATE app_case_device AS cd
+    <set >
+      <if test="paramType != null" >
+        param_type = #{paramType,jdbcType=VARCHAR},
+      </if>
+      <if test="executeNum != null" >
+        cd.execute_num = #{executeNum,jdbcType=INTEGER},
+      </if>
+      <if test="totalSteps != null">
+        cd.total_steps = #{totalSteps, jdbcType=INTEGER},
+      </if>
+      <if test="currentStep != null">
+        cd.current_step = #{currentStep, jdbcType=INTEGER},
+      </if>
+      <if test="passStatus != null" >
+        cd.pass_status = #{passStatus,jdbcType=TINYINT},
+      </if>
+      <if test="executeStatus != null" >
+        cd.execute_status = #{executeStatus,jdbcType=TINYINT},
+      </if>
+      <if test="isPush != null" >
+        cd.is_push = #{isPush,jdbcType=TINYINT},
+      </if>
+      <if test="province != null" >
+        cd.province = #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="telNum != null" >
+        cd.tel_num = #{telNum,jdbcType=VARCHAR},
+      </if>
+      <if test="executeTime != null" >
+        cd.execute_time = #{executeTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    WHERE cd.case_id = #{caseId, jdbcType=INTEGER} AND
+    cd.device_id = ( SELECT d.device_id  FROM app_device AS d WHERE device_sn = #{deviceSn, jdbcType=VARCHAR} )
+  </update>
+
+  <update id="updateByCaseIdAndDeviceId" parameterType="com.cmit.testing.entity.app.AppCaseDevice" >
+    update app_case_device as cd
+    <set >
+      <if test="paramType != null" >
+        param_type = #{paramType,jdbcType=VARCHAR},
+      </if>
+      <if test="executeNum != null" >
+        cd.execute_num = #{executeNum,jdbcType=INTEGER},
+      </if>
+      <if test="totalSteps != null">
+        cd.total_steps = #{totalSteps, jdbcType=INTEGER},
+      </if>
+      <if test="currentStep != null">
+        cd.current_step = #{currentStep, jdbcType=INTEGER},
+      </if>
+      <if test="passStatus != null" >
+        cd.pass_status = #{passStatus,jdbcType=TINYINT},
+      </if>
+      <if test="failureReason != null">
+        cd.failure_reason = #{failureReason,jdbcType=VARCHAR},
+      </if>
+      <if test="executeStatus != null" >
+        cd.execute_status = #{executeStatus,jdbcType=TINYINT},
+      </if>
+      <if test="isPush != null" >
+        cd.is_push = #{isPush,jdbcType=TINYINT},
+      </if>
+      <if test="province != null" >
+        cd.province = #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="telNum != null" >
+        cd.tel_num = #{telNum,jdbcType=VARCHAR},
+      </if>
+      <if test="executeTime != null" >
+        cd.execute_time = #{executeTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    WHERE cd.case_id = #{caseId, jdbcType=INTEGER}
+    <if test="pushed != null">
+      and cd.is_push = #{pushed}
+    </if>
+    <if test="deviceId != null">
+      AND cd.device_id = #{deviceId, jdbcType=INTEGER }
+    </if>
+    <if test="deviceSn != null">
+      AND cd.device_id = ( SELECT d.device_id  FROM app_device AS d WHERE d.device_sn = #{deviceSn, jdbcType=VARCHAR} )
+    </if>
+  </update>
+
+  <delete id="deleteByCaseId" parameterType="java.lang.Integer">
+    DELETE FROM app_case_device
+    WHERE
+    case_id = #{caseId,jdbcType=INTEGER}
+  </delete>
+
+  <delete id="deleteBySelective" parameterType="com.cmit.testing.entity.app.AppCaseDevice">
+    DELETE FROM app_case_device
+    where
+      case_id = #{caseId,jdbcType=INTEGER}
+      <if test="deviceId != null and deviceId != ''">
+        AND device_id = #{deviceId,jdbcType=INTEGER}
+      </if>
+      <if test="executeNum != null and executeNum != ''">
+        and execute_num = #{executeNum, jdbcType=INTEGER}
+      </if>
+      <if test="id != null">
+        and id = #{id, jdbcType=INTEGER}
+      </if>
+  </delete>
+
+  <select id="queryExcuteNum" resultType="java.lang.Integer">
+    SELECT sum(execute_num) FROM app_case_device WHERE
+       execute_status =2
+  </select>
+  <select id="selectByCaseId" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select
+    <include refid="Base_Column_List" />
+    from app_case_device
+    where case_id = #{caseId,jdbcType=INTEGER}
+  </select>
+
+  <!--获取执行通过的手机号码-->
+  <select id="getPhoneNumList" resultType="java.lang.String" parameterType="java.util.Map">
+    SELECT
+      tel_num AS telNum
+    FROM
+      app_case_device AS cd
+      LEFT JOIN app_case AS c ON c.case_id = cd.case_id
+    WHERE
+      c.old_case_id = #{caseId, jdbcType=INTEGER}
+      AND cd.pass_status = '1'
+      AND cd.param_type = '1'
+      <if test="type = 'BatchTask'.toString()">
+        AND c.sys_task_id = #{taskId}
+      </if>
+      <if test="type = 'SurveyTask'.toString()">
+        AND c.survey_task_id = #{taskId}
+      </if>
+      <if test="type = 'SingleTask'.toString()">
+        AND ( c.sys_task_id IS NULL AND c.survey_task_id IS NULL )
+      </if>
+  </select>
+
+  <!--获取执行通过的手机设备信息-->
+  <select id="getCaseDeviceList" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    SELECT
+        cd.id, cd.case_id, cd.device_id, cd.param_type, cd.execute_num, cd.pass_status,cd.failure_reason, cd.execute_status,
+        cd.is_push, cd.province, cd.tel_num, cd.execute_time
+    FROM
+        app_case_device AS cd
+        LEFT JOIN app_case AS c ON c.case_id = cd.case_id
+    WHERE
+        cd.pass_status = 1
+        AND param_type = 1
+        AND execute_status = 2
+        AND c.old_case_id = #{followId}
+  </select>
+
+  <!--批量更新数据-->
+  <update id="batchUpdateCaseDevice" parameterType="com.cmit.testing.entity.app.AppCaseDevice">
+    UPDATE app_case_device
+    <set>
+      <if test="paramType != null" >
+        param_type = #{paramType,jdbcType=VARCHAR},
+      </if>
+      <if test="executeNum != null" >
+        execute_num = #{executeNum,jdbcType=INTEGER},
+      </if>
+      <if test="totalSteps != null">
+        total_steps = #{totalSteps, jdbcType=INTEGER},
+      </if>
+      <if test="currentStep != null">
+        current_step = #{currentStep, jdbcType=INTEGER},
+      </if>
+      <if test="passStatus != null" >
+        pass_status = #{passStatus,jdbcType=TINYINT},
+      </if>
+      <if test="failureReason != null">
+        failure_reason = #{failureReason,jdbcType=VARCHAR},
+      </if>
+      <if test="executeStatus != null" >
+        execute_status = #{executeStatus,jdbcType=TINYINT},
+      </if>
+      <if test="isPush != null" >
+        is_push = #{isPush,jdbcType=TINYINT},
+      </if>
+      <if test="province != null" >
+        province = #{province,jdbcType=VARCHAR},
+      </if>
+      <if test="telNum != null" >
+        tel_num = #{telNum,jdbcType=VARCHAR},
+      </if>
+      <if test="executeTime != null" >
+        execute_time = #{executeTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    <where>
+      case_id = #{caseId}
+      <if test="pushed != null">
+        AND is_push = #{pushed}
+      </if>
+      <if test="deviceIds != null and deviceIds.size() > 0">
+        AND device_id IN
+        <foreach collection="deviceIds" item="id" open="(" close=")" separator=",">
+          #{id}
+        </foreach>
+      </if>
+    </where>
+  </update>
+
+</mapper>

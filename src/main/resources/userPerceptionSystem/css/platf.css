@@ -1,0 +1,307 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+.clearfix{
+	zoom: 1;
+}
+
+.clearfix:after{
+	content: "";
+	display: block;
+	clear: both;
+	overflow: hidden;
+}
+.publicPlatformFlow {
+    background-image: url(../img/bottom.png);
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
+    background-size: 100% 100%;
+}
+
+.head {
+    width: 100%;
+    height: 20%;
+    /* padding-top: 3%; */
+}
+        
+.head-priture {
+    width: 100%;
+    height: 100%;
+    background-image: url(../img/headPalt.png);
+    background-repeat: no-repeat;
+    background-position: top center;
+    display: block;
+    top: 32px;
+    left: 0;
+    position: relative;
+}
+        
+.head-word {
+    text-align: center;
+    display: block;
+    color: #fff;
+    font-size: 3.5vw;
+    font-family: 'Microsoft YaHei';
+    position: absolute;
+    left: 37.5%;
+}
+.content {
+    width: 98%;
+    height: 73%;
+    padding: 2% 2% 0 2%;
+}
+.content-pictrue {
+    width: 100%;
+    height: 100%;
+    background: url(../img/background.png) no-repeat center;
+    background-size: 100% 100%;
+    position: relative;
+    float: left;
+    font-size: 0;
+}
+
+.person, .part-one, .part-two, .part-three, .part-four, .part-five, .part-six{
+    width: 10%;
+    height: 100%;
+    display: inline-block;
+}
+
+.part-arrow-two, .part-arrow-three, .part-arrow-four, .part-arrow-five {
+    width: 5%;
+    height: 100%;
+    display: inline-block;
+}
+.part-arrow-one{
+    width: 7%;
+    height: 100%;
+    display: inline-block;
+}
+.person {
+    position: relative;
+}
+
+.person-up, .person-down{
+    height: 50%;
+    width: 100%;
+}
+.person-up {
+    padding: 65% 3% 20% 15%;
+}
+.person-down {
+    padding: 85% 3% 10% 15%;
+}
+.publisher-pic, .test-pic {
+    display: inline-block;
+    width: 50%;
+    height: 30%;
+    /* background-size: 50% 90%; */
+    float: left;
+}
+.publisher-pic {
+    background: url(../img/Publisher.png) no-repeat center;
+    background-size: 50% 90%;
+}
+
+.publisher-word {
+    display: inline-block;
+    width: 50%;
+    height: 30%;
+    float: right;
+    color: #fff;
+    font-size: 1.1vw;
+    padding-top: 8%;
+}
+
+.test-pic {
+    background: url(../img/TestParty.png) no-repeat center;
+    background-size: 50% 95%;
+}
+.part-one-up, .part-one-down, .part-three-up, .part-three-down {
+    padding: 5%;
+    position: relative;
+}
+
+.part-one-up, .part-one-down, .part-three-up, .part-three-down{
+    display: inline-block;
+    width: 100%;
+    height: 50%;
+    float: left;
+}
+.part-one-up-process,.part-one-down-process, .part-three-up-process, .part-three-down-process{
+    width: 90%;
+    height:20%;
+    border-radius: 5px;
+    position: absolute;
+}
+.part-one-up-process, .part-three-up-process{
+    top: 35%;
+    background: #2085ca;
+}
+
+.part-one-down-process, .part-three-down-process{
+    top: 45%;
+    background: #f4a627 ;
+}
+
+.part-one-up-process-word, .part-down-up-process-word, .part-three-up-process-word, .part-three-down-process-word{
+    display: block;
+    font-size: 1vw;
+    font-weight: bold;
+    color: #fff;
+    padding: 12% 25%;
+}
+.part-arrow-one-up, .part-arrow-one-down {
+    padding: 5%;
+    position: relative;
+    width: 100%;
+    height: 50%;
+}
+.part-arrow-one-up-arrow, .part-arrow-one-down-arrow {
+    width: 100%;
+    height: 30%;
+    background-size: 100% 100%;
+    position: absolute;
+}
+
+.part-arrow-one-up-arrow {
+    background: url(../img/arrowBig-blue.png) no-repeat center;
+    top: 60%;
+}
+
+.part-arrow-one-down-arrow {
+    background: url(../img/arrowBig-orange.png) no-repeat center;
+    top: 12%;
+}
+.part-two-one, .part-two-three, .part-two-five {
+    width: 100%;
+    height: 28%;
+    float: left;
+    position: relative;
+    padding-left: 5%;
+}
+
+.part-two-two, .part-two-four {
+    width: 100%;
+    height: 8%;
+    float: left;
+    position: relative;
+}
+
+.part-two-one-process, .part-two-three-process, .part-two-five-process, .part-five-three-process {
+    width: 90%;
+    height:36%;
+    border-radius: 5px;
+    position: absolute;
+}
+.part-two-one-process {
+    top: 61%;
+    background: #2085ca;
+}
+.part-two-three-process {
+    top: 33%;
+    background: #00c56e;
+}
+.part-two-five-process {
+    top: 2%;
+    background: #f4a627 ;
+}
+
+.part-two-one-word, .part-two-three-word, .part-two-five-word {
+    display: block;
+    font-size: 1vw;
+    font-weight: bold;
+    color: #fff;
+    padding: 12% 25%;
+}
+.part-two-two, .part-two-four {
+    position: relative;
+}
+.part-two-two-arrow, .part-two-four-arrow, .part-five-two-arrow, .part-five-four-arrow {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+.part-two-two-arrow {
+    background: url(../img/arrowBlueUp.png) no-repeat center;
+    background-size: 12% 90%;
+    top: 60%;   
+}
+.part-two-four-arrow {
+    background: url(../img/arrowOrangeDown.png) no-repeat center;
+    background-size: 12% 90%;
+    top: -40%;
+}
+.part-arrow-two-up, .part-arrow-two-down, .part-arrow-three-up, .part-arrow-three-down {
+    width: 100%;
+    height: 50%;
+    background-size: 100% 100%;
+    position: relative;
+}
+.part-arrow-two-up-arrow, .part-arrow-two-down-arrow, .part-arrow-three-up-arrow, .part-arrow-three-down-arrow, .part-arrow-five-up-arrow, .part-arrow-five-down-arrow {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+.part-arrow-two-up-arrow, .part-arrow-three-up-arrow {
+    background: url(../img/arrowBlueMiddle.png) no-repeat center;
+    background-size: 60% 6%;
+    top: -6%;
+}
+
+.part-arrow-two-down-arrow, .part-arrow-three-down-arrow {
+    background: url(../img/arrowOrangeMiddle.png) no-repeat center;
+    background-size: 60% 6%;
+    top: 5%;
+}
+.part-five-two-arrow {
+    background: url(../img/arrowBlueDown.png) no-repeat center;
+    background-size: 12% 90%;
+    top: 60%;   
+}
+.part-five-four-arrow {
+    background: url(../img/arrowOrangeUp.png) no-repeat center;
+    background-size: 12% 90%;
+    top: -40%;
+}
+.part-arrow-five-up-arrow {
+    background: url(../img/arrowBlueMiddle.png) no-repeat center;
+    background-size: 60% 6%;
+    top: 47%;
+}
+.part-arrow-five-down-arrow {
+    background: url(../img/arrowOrangeMiddle.png) no-repeat center;
+    background-size: 60% 6%;
+    top: -45%;
+}
+.part-five-three-process {
+    top: 33%;
+    background: #2085ca;
+}
+.part-six {
+    position: relative;
+}
+
+.part-six-process {
+    width: 90%;
+    height: 10%;
+    border-radius: 5px;
+    position: absolute;
+    top: 45%;
+    background: #8c31eb;
+}
+
+.part-six-word {
+    display: block;
+    font-size: 1vw;
+    font-weight: bold;
+    color: #fff;
+    padding: 12% 25%;
+}
