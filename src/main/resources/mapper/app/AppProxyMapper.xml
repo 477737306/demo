@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.cmit.testing.dao.app.AppProxyMapper">
+  <resultMap id="BaseResultMap" type="com.cmit.testing.entity.app.AppProxy">
+    <id column="proxy_id" jdbcType="INTEGER" property="proxyId" />
+    <result column="proxy_ip" jdbcType="VARCHAR" property="proxyIp" />
+    <result column="proxy_mac" jdbcType="VARCHAR" property="proxyMac" />
+    <result column="online_status" jdbcType="VARCHAR" property="onlineStatus" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    proxy_id, proxy_ip, proxy_mac, online_status, update_time
+  </sql>
+
+  <select id="getList" resultMap="BaseResultMap" parameterType="com.cmit.testing.entity.app.AppProxy">
+    SELECT
+    <include refid="Base_Column_List" />
+    FROM app_proxy
+    <where>
+      <if test="proxyId != null and proxyId != ''">
+        AND proxy_id = #{proxyId, jdbcType=INTEGER}
+      </if>
+      <if test="proxyIp != null and proxyIp != ''">
+        AND proxy_ip = #{proxyIp, jdbcType=INTEGER}
+      </if>
+      <if test="proxyMac != null and proxyMac != ''">
+        AND proxy_mac = #{proxyMac, jdbcType=INTEGER}
+      </if>
+      <if test="onlineStatus != null and onlineStatus != ''">
+        AND online_status = #{onlineStatus, jdbcType=INTEGER}
+      </if>
+    </where>
+  </select>
+
+  <select id="getProxyByIpAndMac" resultMap="BaseResultMap" parameterType="com.cmit.testing.entity.app.AppProxy">
+    SELECT
+    <include refid="Base_Column_List" />
+    FROM app_proxy
+    WHERE proxy_ip = #{proxyIp, jdbcType=VARCHAR} AND proxy_mac = #{proxyMac, jdbcType=VARCHAR}
+  </select>
+
+  <update id="updateByProxyIpAndMac" parameterType="com.cmit.testing.entity.app.AppProxy">
+      UPDATE app_proxy
+      <set>
+        online_status = #{onlineStatus, jdbcType=VARCHAR}
+      </set>
+      WHERE proxy_ip = #{proxyIp, jdbcType=VARCHAR} AND proxy_mac = #{proxyMac, jdbcType=VARCHAR}
+  </update>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from app_proxy
+    where proxy_id = #{proxyId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from app_proxy
+    where proxy_id = #{proxyId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.cmit.testing.entity.app.AppProxy">
+    insert into app_proxy (proxy_id, proxy_ip, proxy_mac,
+      online_status, update_time)
+    values (#{proxyId,jdbcType=INTEGER}, #{proxyIp,jdbcType=VARCHAR}, #{proxyMac,jdbcType=VARCHAR}, 
+      #{onlineStatus,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.cmit.testing.entity.app.AppProxy">
+    insert into app_proxy
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="proxyId != null">
+        proxy_id,
+      </if>
+      <if test="proxyIp != null">
+        proxy_ip,
+      </if>
+      <if test="proxyMac != null">
+        proxy_mac,
+      </if>
+      <if test="onlineStatus != null">
+        online_status,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="proxyId != null">
+        #{proxyId,jdbcType=INTEGER},
+      </if>
+      <if test="proxyIp != null">
+        #{proxyIp,jdbcType=VARCHAR},
+      </if>
+      <if test="proxyMac != null">
+        #{proxyMac,jdbcType=VARCHAR},
+      </if>
+      <if test="onlineStatus != null">
+        #{onlineStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.cmit.testing.entity.app.AppProxy">
+    update app_proxy
+    <set>
+      <if test="proxyIp != null">
+        proxy_ip = #{proxyIp,jdbcType=VARCHAR},
+      </if>
+      <if test="proxyMac != null">
+        proxy_mac = #{proxyMac,jdbcType=VARCHAR},
+      </if>
+      <if test="onlineStatus != null">
+        online_status = #{onlineStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where proxy_id = #{proxyId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.cmit.testing.entity.app.AppProxy">
+    update app_proxy
+    set proxy_ip = #{proxyIp,jdbcType=VARCHAR},
+      proxy_mac = #{proxyMac,jdbcType=VARCHAR},
+      online_status = #{onlineStatus,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where proxy_id = #{proxyId,jdbcType=INTEGER}
+  </update>
+</mapper>

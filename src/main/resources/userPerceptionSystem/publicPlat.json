@@ -1,0 +1,14 @@
+[
+    {
+      "publicPlatProjectCount": "86",
+      "publicPlatTestingCount": "42",
+      "publicPlatBugCount": "880",
+      "publicPlatNewUserCount": "4000",
+      "userSimProjectCount": "34",
+      "userSimScriptCount": "564",
+      "userSimBugCount": "200",
+      "userSimExecutionCount": "8760",
+      "totalProCount": "120",
+      "totalBugCount": "1080"
+    }
+]

@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cmit.testing.dao.app.AppScriptMapper" >
+  <resultMap id="BaseResultMap" type="com.cmit.testing.entity.app.AppScript" >
+    <id column="script_id" property="scriptId" jdbcType="INTEGER" />
+    <result column="script_name" property="scriptName" jdbcType="VARCHAR" />
+    <result column="script_tag" property="scriptTag" jdbcType="INTEGER" />
+    <result column="business_id" property="businessId" jdbcType="INTEGER" />
+    <result column="script_type" property="scriptType" jdbcType="INTEGER" />
+    <result column="description" property="description" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="create_person" property="createPerson" jdbcType="INTEGER" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="update_person" property="updatePerson" jdbcType="INTEGER" />
+    <result column="order_code" property="orderCode" jdbcType="INTEGER" />
+    <result column="phone_height" property="phoneHeight" jdbcType="VARCHAR" />
+    <result column="phone_width" property="phoneWidth" jdbcType="VARCHAR" />
+    <result column="is_clear" property="isClear" jdbcType="INTEGER" />
+    <result column="is_install" property="isInstall" jdbcType="INTEGER" />
+    <result column="is_uninstall" property="isUninstall" jdbcType="INTEGER" />
+    <result column="script_file_name" property="scriptFileName" jdbcType="VARCHAR" />
+    <result column="script_path" property="scriptPath" jdbcType="VARCHAR" />
+    <result column="md5_code" property="md5Code" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <!-- 打包用例zip时使用 -->
+  <resultMap id="ScriptVoMap" type="com.cmit.testing.entity.vo.AppScriptVO">
+    <id column="script_id" property="scriptId" jdbcType="INTEGER" />
+    <result column="script_tag" property="scriptTag" jdbcType="INTEGER" />
+    <result column="script_type" property="scriptType" jdbcType="INTEGER" />
+    <result column="phone_height" property="phoneHeight" jdbcType="VARCHAR" />
+    <result column="phone_width" property="phoneWidth" jdbcType="VARCHAR" />
+    <result column="is_clear" property="isClear" jdbcType="INTEGER" />
+    <result column="is_install" property="isInstall" jdbcType="INTEGER" />
+    <result column="is_uninstall" property="isUninstall" jdbcType="INTEGER" />
+    
+    <collection property="fileVoList" ofType="com.cmit.testing.entity.vo.AppScriptFileVO">
+      <id column="script_file_id" property="scriptFileId" jdbcType="INTEGER" />
+      <result column="order_code" property="orderCode" jdbcType="INTEGER" />
+      <result column="jar_md5_code" property="jarMd5Code" jdbcType="VARCHAR" />
+      <result column="execute_jar_url" property="executeJarUrl" jdbcType="VARCHAR" />
+      <result column="apk_id" property="appId" jdbcType="INTEGER" />
+      <result column="apk_md5_code" property="appMd5Code" jdbcType="VARCHAR" />
+      <result column="apk_url" property="appUrl" jdbcType="VARCHAR" />
+    </collection>
+  </resultMap>
+
+
+  <sql id="Base_Column_List" >
+    script_id, script_name, script_tag, business_id, script_type, description, create_time,
+    create_person, update_time, update_person, order_code, phone_height, phone_width,
+    is_clear, is_install, is_uninstall, script_file_name, script_path, md5_code
+  </sql>
+
+  <!--条件查询脚本信息-->
+  <select id="selectByAppScript" resultMap="BaseResultMap" parameterType="com.cmit.testing.entity.app.AppScript">
+    SELECT <include refid="Base_Column_List" />
+    FROM app_script
+    <where>
+      <if test="businessId != null and businessId != ''">
+        AND  business_id = #{businessId, jdbcType=VARCHAR}
+      </if>
+      <if test="scriptName != null and scriptName != ''">
+        AND  script_name LIKE LIKE CONCAT('%', #{scriptName, jdbcType=VARCHAR}, '%')
+      </if>
+      <if test="scriptTag != null">
+        AND  script_tag = #{scriptTag, jdbcType=INTEGER}
+      </if>
+      <if test="scriptId != null and scriptId != ''">
+        AND  script_id = #{scriptId, jdbcType=INTEGER}
+      </if>
+      <if test="scriptType != null">
+        AND  script_type = #{scriptType, jdbcType=INTEGER}
+      </if>
+    </where>
+  </select>
+
+  <select id="getAllByBusinessId" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    SELECT <include refid="Base_Column_List" />
+    FROM app_script
+    WHERE business_id = #{businessId, jdbcType=INTEGER}
+  </select>
+
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select
+    <include refid="Base_Column_List" />
+    from app_script
+    where script_id = #{scriptId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from app_script
+    where script_id = #{scriptId,jdbcType=INTEGER}
+  </delete>
+  
+  <select id="getScriptById" resultMap="ScriptVoMap" parameterType="java.lang.Integer">
+      SELECT s.script_id, s.script_tag, s.script_type, s.phone_height, s.phone_width, s.is_clear, s.is_install, s.is_uninstall,
+      sf.script_file_id, sf.order_code, sf.md5_code as 'jar_md5_code', sf.execute_jar_url, aa.apk_id, aa.apk_url, aa.md5_code as 'apk_md5_code'
+      FROM app_script AS  s INNER JOIN app_script_file AS sf ON s.script_id = sf.script_id
+      LEFT JOIN app_apk AS aa ON aa.apk_id = sf.app_id
+      WHERE s.script_id = #{scriptId, jdbcType=INTEGER}
+  </select>
+  
+  <insert id="insert" parameterType="com.cmit.testing.entity.app.AppScript" useGeneratedKeys="true" keyProperty="scriptId" >
+    insert into app_script (script_id, script_name, script_tag,
+      business_id, script_type, description, 
+      create_time, create_person, update_time, 
+      update_person, order_code, phone_height, 
+      phone_width, is_clear, is_install, is_uninstall, script_file_name,
+      script_path, md5_code)
+    values (#{scriptId,jdbcType=INTEGER}, #{scriptName,jdbcType=VARCHAR}, #{scriptTag,jdbcType=INTEGER},
+      #{businessId,jdbcType=INTEGER}, #{scriptType,jdbcType=INTEGER}, #{description,jdbcType=VARCHAR},
+      #{createTime,jdbcType=TIMESTAMP}, #{createPerson,jdbcType=INTEGER}, #{updateTime,jdbcType=TIMESTAMP}, 
+      #{updatePerson,jdbcType=INTEGER}, #{orderCode,jdbcType=INTEGER}, #{phoneHeight,jdbcType=VARCHAR}, 
+      #{phoneWidth,jdbcType=VARCHAR}, #{isClear,jdbcType=INTEGER}, #{isInstall,jdbcType=INTEGER}, #{isUninstall,jdbcType=INTEGER},
+      #{scriptFileName,jdbcType=VARCHAR}, #{scriptPath,jdbcType=VARCHAR}, #{md5Code,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.cmit.testing.entity.app.AppScript" useGeneratedKeys="true" keyProperty="scriptId">
+    insert into app_script
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="scriptName != null" >
+        script_name,
+      </if>
+      <if test="scriptTag != null" >
+        script_tag,
+      </if>
+      <if test="businessId != null" >
+        business_id,
+      </if>
+      <if test="scriptType != null" >
+        script_type,
+      </if>
+      <if test="description != null" >
+        description,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="createPerson != null" >
+        create_person,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="updatePerson != null" >
+        update_person,
+      </if>
+      <if test="orderCode != null" >
+        order_code,
+      </if>
+      <if test="phoneHeight != null" >
+        phone_height,
+      </if>
+      <if test="phoneWidth != null" >
+        phone_width,
+      </if>
+      <if test="isClear != null" >
+        is_clear,
+      </if>
+      <if test="isInstall != null" >
+        is_install,
+      </if>
+      <if test="isUninstall != null" >
+        is_uninstall,
+      </if>
+      <if test="scriptFileName != null">
+        script_file_name,
+      </if>
+      <if test="scriptPath != null" >
+        script_path,
+      </if>
+      <if test="md5Code != null" >
+        md5_code,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="scriptName != null" >
+        #{scriptName,jdbcType=VARCHAR},
+      </if>
+      <if test="scriptTag != null" >
+        #{scriptTag,jdbcType=INTEGER},
+      </if>
+      <if test="businessId != null" >
+        #{businessId,jdbcType=INTEGER},
+      </if>
+      <if test="scriptType != null" >
+        #{scriptType,jdbcType=INTEGER},
+      </if>
+      <if test="description != null" >
+        #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createPerson != null" >
+        #{createPerson,jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updatePerson != null" >
+        #{updatePerson,jdbcType=INTEGER},
+      </if>
+      <if test="orderCode != null" >
+        #{orderCode,jdbcType=INTEGER},
+      </if>
+      <if test="phoneHeight != null" >
+        #{phoneHeight,jdbcType=VARCHAR},
+      </if>
+      <if test="phoneWidth != null" >
+        #{phoneWidth,jdbcType=VARCHAR},
+      </if>
+      <if test="isClear != null" >
+        #{isClear,jdbcType=INTEGER},
+      </if>
+      <if test="isInstall != null" >
+        #{isInstall,jdbcType=INTEGER},
+      </if>
+      <if test="isUninstall != null" >
+        #{isUninstall,jdbcType=INTEGER},
+      </if>
+      <if test="scriptFileName != null">
+        #{scriptFileName, jdbcType=VARCHAR},
+      </if>
+      <if test="scriptPath != null" >
+        #{scriptPath,jdbcType=VARCHAR},
+      </if>
+      <if test="md5Code != null" >
+        #{md5Code,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.cmit.testing.entity.app.AppScript" >
+    update app_script
+    <set >
+      <if test="scriptName != null" >
+        script_name = #{scriptName,jdbcType=VARCHAR},
+      </if>
+      <if test="scriptTag != null" >
+        script_tag = #{scriptTag,jdbcType=INTEGER},
+      </if>
+      <if test="businessId != null" >
+        business_id = #{businessId,jdbcType=INTEGER},
+      </if>
+      <if test="scriptType != null" >
+        script_type = #{scriptType,jdbcType=INTEGER},
+      </if>
+      <if test="description != null" >
+        description = #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createPerson != null" >
+        create_person = #{createPerson,jdbcType=INTEGER},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updatePerson != null" >
+        update_person = #{updatePerson,jdbcType=INTEGER},
+      </if>
+      <if test="orderCode != null" >
+        order_code = #{orderCode,jdbcType=INTEGER},
+      </if>
+      <if test="phoneHeight != null" >
+        phone_height = #{phoneHeight,jdbcType=VARCHAR},
+      </if>
+      <if test="phoneWidth != null" >
+        phone_width = #{phoneWidth,jdbcType=VARCHAR},
+      </if>
+      <if test="isClear != null" >
+        is_clear = #{isClear,jdbcType=INTEGER},
+      </if>
+      <if test="isInstall != null" >
+        is_install = #{isInstall,jdbcType=INTEGER},
+      </if>
+      <if test="isUninstall != null" >
+        is_uninstall = #{isUninstall,jdbcType=INTEGER},
+      </if>
+      <if test="scriptFileName != null">
+        script_file_name = #{scriptFileName, jdbcType=VARCHAR},
+      </if>
+      <if test="scriptPath != null" >
+        script_path = #{scriptPath,jdbcType=VARCHAR},
+      </if>
+      <if test="md5Code != null" >
+        md5_code = #{md5Code,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where script_id = #{scriptId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.cmit.testing.entity.app.AppScript" >
+    update app_script
+    set script_name = #{scriptName,jdbcType=VARCHAR},
+      script_tag = #{scriptTag,jdbcType=INTEGER},
+      business_id = #{businessId,jdbcType=INTEGER},
+      script_type = #{scriptType,jdbcType=INTEGER},
+      description = #{description,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      create_person = #{createPerson,jdbcType=INTEGER},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      update_person = #{updatePerson,jdbcType=INTEGER},
+      order_code = #{orderCode,jdbcType=INTEGER},
+      phone_height = #{phoneHeight,jdbcType=VARCHAR},
+      phone_width = #{phoneWidth,jdbcType=VARCHAR},
+      is_clear = #{isClear,jdbcType=INTEGER},
+      is_install = #{isInstall,jdbcType=INTEGER},
+      is_uninstall = #{isUninstall,jdbcType=INTEGER},
+      script_file_name = #{scriptFileName,jdbcType=VARCHAR},
+      script_path = #{scriptPath,jdbcType=VARCHAR},
+      md5_code = #{md5Code,jdbcType=VARCHAR}
+    where script_id = #{scriptId,jdbcType=INTEGER}
+  </update>
+  <select id="selectincidencetById" parameterType="com.cmit.testing.entity.app.AppScript" resultType="java.lang.Integer">
+     SELECT count(0) FROM app_case WHERE app_case.script_id=#{scriptId}
+  </select>
+  <select id="getCountByName" parameterType="java.lang.String" resultType="java.lang.Integer">
+    SELECT COUNT(1)
+    FROM app_script
+    WHERE 1=1
+    <if test="scriptId != null">
+      AND script_id <![CDATA[ != ]]> #{scriptId, jdbcType=VARCHAR}
+    </if>
+    <if test="scriptName != null">
+      AND script_name = #{scriptName, jdbcType=VARCHAR}
+    </if>
+  </select>
+  <select id="listByScriptIds" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select
+    <include refid="Base_Column_List"/>
+    from app_script
+    where script_id IN
+    <foreach item="id" collection="ids" open="(" close=")" separator=",">
+      #{id,jdbcType=INTEGER}
+    </foreach>
+  </select>
+
+  <delete id="deleteByScriptIds" parameterType="java.lang.Integer">
+    delete from app_script
+    where script_id IN
+    <foreach item="id" collection="ids" open="(" close=")" separator=",">
+      #{id,jdbcType=INTEGER}
+    </foreach>
+  </delete>
+
+  <resultMap id="ScriptMap" type="com.cmit.testing.entity.vo.ScriptVO">
+    <id column="script_id" property="scriptId" jdbcType="INTEGER" />
+    <result column="script_name" property="scriptName" jdbcType="VARCHAR" />
+    <result column="script_tag" property="scriptTag" jdbcType="INTEGER" />
+    <result column="script_path" property="scriptPath" jdbcType="VARCHAR" />
+    <result column="business_id" property="businessId" jdbcType="INTEGER" />
+    <result column="script_type" property="scriptType" jdbcType="INTEGER" />
+    <result column="description" property="description" jdbcType="VARCHAR" />
+    <result column="script_file_id" property="scriptFileId" jdbcType="INTEGER" />
+    <result column="is_clear" property="isClear" jdbcType="INTEGER" />
+    <result column="is_install" property="isInstall" jdbcType="INTEGER" />
+    <result column="is_uninstall" property="isUninstall" jdbcType="INTEGER" />
+    <result column="app_id" property="appId" jdbcType="INTEGER" />
+    <result column="app_name" property="appName" jdbcType="VARCHAR" />
+    <result column="app_version" property="appVersion" jdbcType="VARCHAR" />
+    <result column="package_name" property="packageName" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <select id="getScriptInfoById" resultMap="ScriptMap" parameterType="java.lang.Integer">
+    SELECT
+      s.script_id,
+      s.script_name,
+      s.script_tag,
+      s.script_path,
+      s.business_id,
+      s.script_type,
+      s.description,
+      s.is_clear,
+      s.is_install,
+      s.is_uninstall,
+      s.phone_width,
+      s.phone_height,
+      sf.script_file_id,
+      sf.app_id,
+      sf.app_name,
+      sf.app_version,
+      sf.package_name
+    FROM
+        app_script AS s
+        LEFT JOIN app_script_file AS sf ON s.script_id = sf.script_id
+    WHERE s.script_id = #{scriptId, jdbcType=INTEGER}
+  </select>
+
+  <select id="queryAppScriptCount" resultType="java.lang.Integer">
+    SELECT COUNT(1) FROM app_script
+  </select>
+  <select id="getAppScriptById"  parameterType="java.lang.Integer" resultMap="BaseResultMap">
+      SELECT s.script_id, s.script_tag, s.script_type, s.phone_height, s.phone_width, s.is_clear, s.is_install, s.is_uninstall,
+      sf.script_file_id, sf.order_code, sf.md5_code as 'jar_md5_code', sf.execute_jar_url, aa.apk_id, aa.apk_url, aa.md5_code as 'apk_md5_code'
+      FROM app_script AS  s INNER JOIN app_script_file AS sf ON s.script_id = sf.script_id
+      LEFT JOIN app_apk AS aa ON aa.apk_id = sf.app_id
+      WHERE s.script_id = #{scriptId, jdbcType=INTEGER}
+  </select>
+  <select id="selectScriptById"  parameterType="java.lang.Integer" resultMap="BaseResultMap">
+  SELECT <include refid="Base_Column_List" />
+    FROM app_script
+      WHERE script_id= #{scriptId, jdbcType=INTEGER}
+  </select>
+</mapper>

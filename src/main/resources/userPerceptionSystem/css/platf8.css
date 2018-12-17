@@ -1,0 +1,32 @@
+   
+.head-word {
+    font-size: 5vw;
+    left: 33%;
+    top: 6%;
+}
+
+.part-one-up-process-word, .part-down-up-process-word, .part-three-up-process-word, .part-three-down-process-word {
+	padding: 30% 15%;
+}
+
+.part-two-one-word, .part-two-three-word, .part-two-five-word {
+	padding: 30% 15%;
+}
+.part-six-word {
+	padding: 30% 15%;
+}
+.person-up {
+    padding: 165% 3% 20% 15%;
+}
+
+.person-down {
+    padding: 235% 3% 10% 15%;
+}
+
+.head-priture {
+	top: 45px;
+}
+
+.publisher-word {
+	padding-top: 29%;
+}

@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cmit.testing.dao.SysLogMapper" >
+  <resultMap id="BaseResultMap" type="com.cmit.testing.entity.SysLog" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="operation_info" property="operationInfo" jdbcType="VARCHAR" />
+    <result column="operation_type" property="operationType" jdbcType="VARCHAR" />
+    <result column="server_ip" property="serverIp" jdbcType="VARCHAR" />
+    <result column="service" property="service" jdbcType="VARCHAR" />
+    <result column="model_name" property="modelName" jdbcType="VARCHAR" />
+    <result column="result" property="result" jdbcType="VARCHAR" />
+    <result column="session_id" property="sessionId" jdbcType="VARCHAR" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, operation_info, operation_type, server_ip, service, model_name, result, session_id, 
+    update_by, update_time, create_by, create_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from sys_log
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from sys_log
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+
+  <select id="findPage" resultMap="BaseResultMap" parameterType="com.cmit.testing.entity.SysLog">
+    select
+    <include refid="Base_Column_List" />
+    from sys_log
+    where  1=1
+    <if test="sysLog.id != null" >
+      AND id = #{sysLog.id}
+    </if>
+    <if test="sysLog.operationInfo != null and sysLog.operationInfo !=''" >
+      AND operation_info = #{sysLog.operationInfo}
+    </if>
+    <if test="sysLog.operationType != null  and sysLog.operationType !=''" >
+      AND operation_type = #{sysLog.operationType}
+    </if>
+    <if test="sysLog.serverIp != null and sysLog.serverIp !=''" >
+      AND server_ip = #{sysLog.serverIp}
+    </if>
+    <if test="sysLog.service != null and sysLog.server !=''" >
+      AND service  = #{server}
+    </if>
+    <if test="sysLog.modelName != null and sysLog.modelName != ''" >
+      AND model_name LIKE CONCAT('%', #{sysLog.modelName}, '%')
+    </if>
+    <if test="sysLog.result != null and sysLog.result != ''" >
+      AND result LIKE CONCAT('%', #{sysLog.result}, '%')
+    </if>
+    <if test="sysLog.sessionId != null and sysLog.sessionId != ''" >
+      AND session_id LIKE CONCAT('%', #{sysLog.sessionId}, '%')
+    </if>
+    <if test="sysLog.updateBy != null and sysLog.updateBy != ''" >
+      AND update_by LIKE CONCAT('%', #{sysLog.updateBy}, '%')
+    </if>
+    <if test="sysLog.updateTime != null and sysLog.updateTime != ''" >
+      AND update_time = #{sysLog.updateTime}
+    </if>
+    <if test="sysLog.createBy != null and sysLog.createBy != ''" >
+      AND create_by LIKE CONCAT('%', #{sysLog.createBy}, '%')
+    </if>
+    <if test="sysLog.createTime != null and sysLog.createTime != ''" >
+      AND create_time = #{sysLog.createTime}
+    </if>
+    <if test="startDate != null and startDate != ''" >
+      AND create_time >= #{startDate}
+    </if>
+    <if test="endDate != null and endDate != ''" >
+      AND create_time &lt;=   #{endDate}
+    </if>
+    ORDER BY create_time DESC
+  </select>
+
+  <insert id="insert" parameterType="com.cmit.testing.entity.SysLog" >
+    insert into sys_log (id, operation_info, operation_type, 
+      server_ip, service, model_name, 
+      result, session_id, update_by, 
+      update_time, create_by, create_time
+      )
+    values (#{id,jdbcType=INTEGER}, #{operationInfo,jdbcType=VARCHAR}, #{operationType,jdbcType=VARCHAR}, 
+      #{serverIp,jdbcType=VARCHAR}, #{service,jdbcType=VARCHAR}, #{modelName,jdbcType=VARCHAR}, 
+      #{result,jdbcType=VARCHAR}, #{sessionId,jdbcType=VARCHAR}, #{updateBy,jdbcType=VARCHAR}, 
+      #{updateTime,jdbcType=TIMESTAMP}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.cmit.testing.entity.SysLog" >
+    insert into sys_log
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="operationInfo != null" >
+        operation_info,
+      </if>
+      <if test="operationType != null" >
+        operation_type,
+      </if>
+      <if test="serverIp != null" >
+        server_ip,
+      </if>
+      <if test="service != null" >
+        service,
+      </if>
+      <if test="modelName != null" >
+        model_name,
+      </if>
+      <if test="result != null" >
+        result,
+      </if>
+      <if test="sessionId != null" >
+        session_id,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="operationInfo != null" >
+        #{operationInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="operationType != null" >
+        #{operationType,jdbcType=VARCHAR},
+      </if>
+      <if test="serverIp != null" >
+        #{serverIp,jdbcType=VARCHAR},
+      </if>
+      <if test="service != null" >
+        #{service,jdbcType=VARCHAR},
+      </if>
+      <if test="modelName != null" >
+        #{modelName,jdbcType=VARCHAR},
+      </if>
+      <if test="result != null" >
+        #{result,jdbcType=VARCHAR},
+      </if>
+      <if test="sessionId != null" >
+        #{sessionId,jdbcType=VARCHAR},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.cmit.testing.entity.SysLog" >
+    update sys_log
+    <set >
+      <if test="operationInfo != null" >
+        operation_info = #{operationInfo,jdbcType=VARCHAR},
+      </if>
+      <if test="operationType != null" >
+        operation_type = #{operationType,jdbcType=VARCHAR},
+      </if>
+      <if test="serverIp != null" >
+        server_ip = #{serverIp,jdbcType=VARCHAR},
+      </if>
+      <if test="service != null" >
+        service = #{service,jdbcType=VARCHAR},
+      </if>
+      <if test="modelName != null" >
+        model_name = #{modelName,jdbcType=VARCHAR},
+      </if>
+      <if test="result != null" >
+        result = #{result,jdbcType=VARCHAR},
+      </if>
+      <if test="sessionId != null" >
+        session_id = #{sessionId,jdbcType=VARCHAR},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.cmit.testing.entity.SysLog" >
+    update sys_log
+    set operation_info = #{operationInfo,jdbcType=VARCHAR},
+      operation_type = #{operationType,jdbcType=VARCHAR},
+      server_ip = #{serverIp,jdbcType=VARCHAR},
+      service = #{service,jdbcType=VARCHAR},
+      model_name = #{modelName,jdbcType=VARCHAR},
+      result = #{result,jdbcType=VARCHAR},
+      session_id = #{sessionId,jdbcType=VARCHAR},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

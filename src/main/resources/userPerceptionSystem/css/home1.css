@@ -1,0 +1,19 @@
+.public-palt-word, .user-simu-word  {
+	top: 33%;
+}
+
+.underPart-left-upper, .underPart-left-down {
+	background-size: 70%;
+}
+
+.underPart-left-upper-num, .underPart-left-down-num {
+	top: 32%;
+}
+
+.underPart-left-upper-word, .underPart-left-down-word {
+	top: 70%;
+}
+
+.head-word {
+	top: 12%;
+}

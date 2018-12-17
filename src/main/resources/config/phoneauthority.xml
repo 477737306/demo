@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 启动运行app时，弹出的权限提示框确认按钮的id -->
+<authority>
+	<id>com.android.packageinstaller:id/permission_allow_button</id>  <!-- Nexus 5X -->
+	<id>android:id/button1</id>		<!-- Meizu Pro6 -->
+	<id>com.lbe.security.miui:id/permission_allow_button</id>   <!-- Xiaomi 5 -->
+	<id>com.huawei.systemmanager:id/btn_allow</id>     <!-- honor 8 -->
+	<id>amigo:id/amigo_button1</id>     <!-- Gionee S6 Pro -->
+	<id>com.yulong.android.security:id/button3</id>     <!-- coolpad max -->
+</authority>

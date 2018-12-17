@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cmit.testing.dao.TimedTaskMapper" >
+  <resultMap id="BaseResultMap" type="com.cmit.testing.entity.TimedTask" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="test_case_type" property="testCaseType" jdbcType="VARCHAR" />
+    <result column="test_case_id" property="testCaseId" jdbcType="INTEGER" />
+    <result column="type" property="type" jdbcType="INTEGER" />
+    <result column="job_name" property="jobName" jdbcType="VARCHAR" />
+    <result column="group_name" property="groupName" jdbcType="VARCHAR" />
+    <result column="cron" property="cron" jdbcType="VARCHAR" />
+    <result column="trigger_group_name" property="triggerGroupName" jdbcType="VARCHAR" />
+    <result column="trigger_name" property="triggerName" jdbcType="VARCHAR" />
+    <result column="create_by" property="createBy" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_by" property="updateBy" jdbcType="VARCHAR" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, status, test_case_type, test_case_id, type, job_name, group_name, cron, trigger_group_name, 
+    trigger_name, create_by, create_time, update_by, update_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from timed_task
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from timed_task
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.cmit.testing.entity.TimedTask" useGeneratedKeys="true" keyProperty="id">
+    insert into timed_task (id, status, test_case_type, 
+      test_case_id, type, job_name, 
+      group_name, cron, trigger_group_name, 
+      trigger_name, create_by, create_time, 
+      update_by, update_time)
+    values (#{id,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, #{testCaseType,jdbcType=VARCHAR}, 
+      #{testCaseId,jdbcType=INTEGER}, #{type,jdbcType=INTEGER}, #{jobName,jdbcType=VARCHAR}, 
+      #{groupName,jdbcType=VARCHAR}, #{cron,jdbcType=VARCHAR}, #{triggerGroupName,jdbcType=VARCHAR}, 
+      #{triggerName,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, 
+      #{updateBy,jdbcType=VARCHAR}, #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="com.cmit.testing.entity.TimedTask" >
+    insert into timed_task
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="testCaseType != null" >
+        test_case_type,
+      </if>
+      <if test="testCaseId != null" >
+        test_case_id,
+      </if>
+      <if test="type != null" >
+        type,
+      </if>
+      <if test="jobName != null" >
+        job_name,
+      </if>
+      <if test="groupName != null" >
+        group_name,
+      </if>
+      <if test="cron != null" >
+        cron,
+      </if>
+      <if test="triggerGroupName != null" >
+        trigger_group_name,
+      </if>
+      <if test="triggerName != null" >
+        trigger_name,
+      </if>
+      <if test="createBy != null" >
+        create_by,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateBy != null" >
+        update_by,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="testCaseType != null" >
+        #{testCaseType,jdbcType=VARCHAR},
+      </if>
+      <if test="testCaseId != null" >
+        #{testCaseId,jdbcType=INTEGER},
+      </if>
+      <if test="type != null" >
+        #{type,jdbcType=INTEGER},
+      </if>
+      <if test="jobName != null" >
+        #{jobName,jdbcType=VARCHAR},
+      </if>
+      <if test="groupName != null" >
+        #{groupName,jdbcType=VARCHAR},
+      </if>
+      <if test="cron != null" >
+        #{cron,jdbcType=VARCHAR},
+      </if>
+      <if test="triggerGroupName != null" >
+        #{triggerGroupName,jdbcType=VARCHAR},
+      </if>
+      <if test="triggerName != null" >
+        #{triggerName,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.cmit.testing.entity.TimedTask" >
+    update timed_task
+    <set >
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="testCaseType != null" >
+        test_case_type = #{testCaseType,jdbcType=VARCHAR},
+      </if>
+      <if test="testCaseId != null" >
+        test_case_id = #{testCaseId,jdbcType=INTEGER},
+      </if>
+      <if test="type != null" >
+        type = #{type,jdbcType=INTEGER},
+      </if>
+      <if test="jobName != null" >
+        job_name = #{jobName,jdbcType=VARCHAR},
+      </if>
+      <if test="groupName != null" >
+        group_name = #{groupName,jdbcType=VARCHAR},
+      </if>
+      <if test="cron != null" >
+        cron = #{cron,jdbcType=VARCHAR},
+      </if>
+      <if test="triggerGroupName != null" >
+        trigger_group_name = #{triggerGroupName,jdbcType=VARCHAR},
+      </if>
+      <if test="triggerName != null" >
+        trigger_name = #{triggerName,jdbcType=VARCHAR},
+      </if>
+      <if test="createBy != null" >
+        create_by = #{createBy,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateBy != null" >
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.cmit.testing.entity.TimedTask" >
+    update timed_task
+    set status = #{status,jdbcType=INTEGER},
+      test_case_type = #{testCaseType,jdbcType=VARCHAR},
+      test_case_id = #{testCaseId,jdbcType=INTEGER},
+      type = #{type,jdbcType=INTEGER},
+      job_name = #{jobName,jdbcType=VARCHAR},
+      group_name = #{groupName,jdbcType=VARCHAR},
+      cron = #{cron,jdbcType=VARCHAR},
+      trigger_group_name = #{triggerGroupName,jdbcType=VARCHAR},
+      trigger_name = #{triggerName,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  
+  <!-- 根据条件查询定时任务信息 -->
+  <select id="findAll" parameterType="com.cmit.testing.entity.TimedTask"
+	resultType="com.cmit.testing.entity.TimedTask">
+	select
+	<include refid="Base_Column_List" />
+	from timed_task where 1=1
+	<if test="jobName != null and jobName != ''">
+		AND job_name LIKE CONCAT('%', #{jobName }, '%')
+	</if>
+	<if test="groupName != null and groupName != ''">
+		AND group_name LIKE CONCAT('%', #{groupName }, '%')
+	</if>
+	<if test="id != null">
+	    AND id = #{id,jdbcType=INTEGER}
+	</if>
+	<if test="status != null">
+        AND status = #{status,jdbcType=INTEGER}
+	</if>
+	<if test="testCaseType != null and testCaseType != ''">
+        AND test_case_type = #{testCaseType,jdbcType=VARCHAR}
+	</if>
+	<if test="testCaseId != null">
+        AND test_case_id = #{testCaseId,jdbcType=INTEGER}
+	</if>
+	<if test="type != null">
+        AND type = #{type,jdbcType=INTEGER}
+	</if>
+	<if test="cron != null and cron != ''">
+        AND cron = #{cron,jdbcType=VARCHAR}
+	</if>
+	<if test="triggerGroupName != null and triggerGroupName != ''">
+        AND trigger_group_name = #{triggerGroupName,jdbcType=VARCHAR}
+	</if>
+	<if test="triggerName != null and triggerName != ''">
+        AND trigger_name = #{triggerName,jdbcType=VARCHAR}
+	</if>
+	<if test="createBy != null and createBy != ''">
+        AND create_by = #{createBy,jdbcType=VARCHAR}
+	</if>
+	<if test="createTime != null ">
+        AND create_time = #{createTime,jdbcType=TIMESTAMP}
+	</if>
+	<if test="updateBy != null and updateBy!=''">
+        AND update_by = #{updateBy,jdbcType=VARCHAR}
+	</if>
+	<if test="updateTime != null">
+        AND update_time = #{updateTime,jdbcType=TIMESTAMP}
+	</if>
+	ORDER BY id DESC
+</select>
+
+
+  <update id="updateByTestCaseIdAndType" parameterType="com.cmit.testing.entity.TimedTask">
+    update timed_task
+    set
+      status = #{status},
+      test_case_type = #{testCaseType,jdbcType=VARCHAR},
+      test_case_id = #{testCaseId,jdbcType=INTEGER},
+      type = #{type,jdbcType=INTEGER},
+      job_name = #{jobName,jdbcType=VARCHAR},
+      group_name = #{groupName,jdbcType=VARCHAR},
+      cron = #{cron,jdbcType=VARCHAR},
+      trigger_group_name = #{triggerGroupName,jdbcType=VARCHAR},
+      trigger_name = #{triggerName,jdbcType=VARCHAR},
+      create_by = #{createBy,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_by = #{updateBy,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where test_case_id = #{testCaseId,jdbcType=INTEGER} and test_case_type= #{testCaseType,jdbcType=VARCHAR}
+  </update>
+
+  <!--提供给系统自动更新任务状态-->
+  <update id="updateStatusByCaseIdAndType" parameterType="com.cmit.testing.entity.TimedTask">
+    update timed_task
+    <set>
+      <if test="status != null">
+        status = #{status},
+      </if>
+      <if test="updateBy != null">
+        update_by = #{updateBy,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP}
+      </if>
+    </set>
+    where test_case_id = #{testCaseId,jdbcType=INTEGER} and test_case_type= #{testCaseType,jdbcType=VARCHAR}
+  </update>
+
+  <delete id="deleteByIds"  parameterType="java.lang.Integer">
+    delete from timed_task
+    where id IN
+    <foreach close=")" collection="ids" item="id" open="(" separator=",">
+      #{id,jdbcType=INTEGER}
+    </foreach>
+    OR old_testcase_id IN
+    <foreach close=")" collection="ids" item="id" open="(" separator=",">
+      #{id,jdbcType=INTEGER}
+    </foreach>
+  </delete>
+  <delete id="deleteByTestCaseIdAndType">
+    delete from timed_task
+    where test_case_id= #{id } and test_case_type = #{type }
+
+  </delete>
+</mapper>
